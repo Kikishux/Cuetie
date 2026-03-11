@@ -27,19 +27,18 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, displayName, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const initials =
-    user?.user_metadata?.display_name
-      ?.split(" ")
-      .map((n: string) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) ??
-    user?.email?.charAt(0).toUpperCase() ??
-    "?";
+  const initials = displayName
+    ? displayName
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.email?.charAt(0).toUpperCase() ?? "?";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-lg">
@@ -100,7 +99,7 @@ export default function Header() {
                 <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
                   <div className="px-3 py-2">
                     <p className="text-sm font-medium">
-                      {user?.user_metadata?.display_name ?? "User"}
+                      {displayName ?? "User"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
                       {user?.email}

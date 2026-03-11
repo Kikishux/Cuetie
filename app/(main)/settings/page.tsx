@@ -65,7 +65,7 @@ const challengeOptions = [
 /* ───────────────── component ───────────────── */
 
 export default function SettingsPage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const supabase = createClient();
 
   const [displayName, setDisplayName] = useState("");
@@ -134,6 +134,7 @@ export default function SettingsPage() {
       })
       .eq("id", user.id);
 
+    await refreshProfile();
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
