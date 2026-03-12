@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   LogOut,
+  Mic,
   MessageCircle,
   BrainCircuit,
   X,
@@ -42,7 +43,12 @@ export default function SessionPage() {
 
   const audioPlayer = useAudioPlayer();
 
-  const isVoiceMode = session?.mode === "voice";
+  // Voice mode can be toggled within a session — default to the session mode
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+
+  useEffect(() => {
+    if (session?.mode === "voice") setVoiceEnabled(true);
+  }, [session?.mode]);
 
   // Fetch session + scenario data
   useEffect(() => {
@@ -93,20 +99,31 @@ export default function SessionPage() {
           <div className="min-w-0">
             <h2 className="text-sm font-semibold truncate flex items-center gap-1.5">
               {scenario?.title ?? "Loading…"}
-              {isVoiceMode && (
+              {voiceEnabled && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal gap-1">
                   🎤 Voice
                 </Badge>
               )}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {isVoiceMode ? "Speaking" : "Chatting"} with{" "}
+              {voiceEnabled ? "Speaking" : "Chatting"} with{" "}
               <span className="font-medium text-foreground">{partnerName}</span>
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Voice mode toggle */}
+          <Button
+            variant={voiceEnabled ? "default" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setVoiceEnabled((v) => !v)}
+            aria-label={voiceEnabled ? "Switch to text mode" : "Switch to voice mode"}
+          >
+            <Mic className="h-4 w-4" />
+          </Button>
+
           {/* Mobile coaching toggle */}
           <Button
             variant="ghost"
@@ -147,10 +164,10 @@ export default function SessionPage() {
             streamingText={streamingText}
             isLoading={isLoading}
             onSendMessage={sendMessage}
-            onSendVoiceMessage={isVoiceMode ? sendVoiceMessage : undefined}
-            onPlayAudio={isVoiceMode ? (url) => audioPlayer.play(url) : undefined}
+            onSendVoiceMessage={voiceEnabled ? sendVoiceMessage : undefined}
+            onPlayAudio={voiceEnabled ? (url) => audioPlayer.play(url) : undefined}
             partnerName={partnerName}
-            voiceMode={isVoiceMode}
+            voiceMode={voiceEnabled}
           />
         </div>
 
