@@ -16,8 +16,26 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import type { GenderIdentity, DatingPreference } from "@/lib/types/database"
 
-const TOTAL_STEPS = 4
+const TOTAL_STEPS = 5
+
+const GENDER_OPTIONS = [
+  { value: "male" as const, label: "Male", emoji: "👨" },
+  { value: "female" as const, label: "Female", emoji: "👩" },
+  { value: "non-binary" as const, label: "Non-binary", emoji: "🧑" },
+  { value: "genderqueer" as const, label: "Genderqueer", emoji: "✨" },
+  { value: "prefer-not-to-say" as const, label: "Prefer not to say", emoji: "🤫" },
+  { value: "other" as const, label: "Other", emoji: "💫" },
+] as const
+
+const DATING_PREFERENCE_OPTIONS = [
+  { value: "male" as const, label: "Men", emoji: "👨" },
+  { value: "female" as const, label: "Women", emoji: "👩" },
+  { value: "non-binary" as const, label: "Non-binary people", emoji: "🧑" },
+  { value: "genderqueer" as const, label: "Genderqueer people", emoji: "✨" },
+  { value: "no-preference" as const, label: "No preference", emoji: "💕" },
+] as const
 
 const CHALLENGES = [
   { id: "sarcasm", label: "Reading sarcasm or jokes", emoji: "😅" },
@@ -82,6 +100,9 @@ export function OnboardingWizard() {
 
   // Form state
   const [displayName, setDisplayName] = useState("")
+  const [gender, setGender] = useState<GenderIdentity | null>(null)
+  const [genderCustom, setGenderCustom] = useState("")
+  const [datingPreference, setDatingPreference] = useState<DatingPreference | null>(null)
   const [challenges, setChallenges] = useState<string[]>([])
   const [goals, setGoals] = useState<string[]>([])
   const [coachingStyle, setCoachingStyle] = useState<CoachingStyle | null>(null)
@@ -101,10 +122,14 @@ export function OnboardingWizard() {
       case 1:
         return displayName.trim().length > 0
       case 2:
-        return challenges.length > 0
+        if (!gender) return false
+        if (gender === "other" && !genderCustom.trim()) return false
+        return datingPreference !== null
       case 3:
-        return goals.length > 0
+        return challenges.length > 0
       case 4:
+        return goals.length > 0
+      case 5:
         return coachingStyle !== null
       default:
         return false
@@ -137,6 +162,11 @@ export function OnboardingWizard() {
         body: JSON.stringify({
           display_name: displayName.trim(),
           onboarding_profile: {
+            gender,
+            ...(gender === "other" && genderCustom.trim()
+              ? { gender_custom: genderCustom.trim() }
+              : {}),
+            dating_preference: datingPreference,
             challenges,
             goals,
             preferred_coaching_style: coachingStyle,
@@ -197,18 +227,28 @@ export function OnboardingWizard() {
             />
           )}
           {currentStep === 2 && (
+            <StepGenderPreferences
+              gender={gender}
+              setGender={setGender}
+              genderCustom={genderCustom}
+              setGenderCustom={setGenderCustom}
+              datingPreference={datingPreference}
+              setDatingPreference={setDatingPreference}
+            />
+          )}
+          {currentStep === 3 && (
             <StepChallenges
               selected={challenges}
               toggle={(item) => toggleItem(challenges, setChallenges, item)}
             />
           )}
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <StepGoals
               selected={goals}
               toggle={(item) => toggleItem(goals, setGoals, item)}
             />
           )}
-          {currentStep === 4 && (
+          {currentStep === 5 && (
             <StepCoachingStyle
               selected={coachingStyle}
               setSelected={setCoachingStyle}
@@ -297,6 +337,80 @@ function StepWelcome({
           }
           autoFocus
         />
+      </CardContent>
+    </>
+  )
+}
+
+function StepGenderPreferences({
+  gender,
+  setGender,
+  genderCustom,
+  setGenderCustom,
+  datingPreference,
+  setDatingPreference,
+}: {
+  gender: GenderIdentity | null
+  setGender: (v: GenderIdentity) => void
+  genderCustom: string
+  setGenderCustom: (v: string) => void
+  datingPreference: DatingPreference | null
+  setDatingPreference: (v: DatingPreference) => void
+}) {
+  return (
+    <>
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">
+          A little about you
+        </CardTitle>
+        <CardDescription className="mt-1 text-sm leading-relaxed">
+          This helps me personalize your practice conversations
+          so they feel more realistic and relevant.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6 px-6">
+        {/* Gender Identity */}
+        <div className="space-y-2.5">
+          <Label className="text-sm font-medium">How do you identify?</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {GENDER_OPTIONS.map((opt) => (
+              <ToggleChip
+                key={opt.value}
+                label={opt.label}
+                emoji={opt.emoji}
+                active={gender === opt.value}
+                onClick={() => setGender(opt.value)}
+              />
+            ))}
+          </div>
+          {gender === "other" && (
+            <Input
+              placeholder="How do you identify?"
+              value={genderCustom}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setGenderCustom(e.target.value)
+              }
+              className="mt-2"
+              autoFocus
+            />
+          )}
+        </div>
+
+        {/* Dating Preference */}
+        <div className="space-y-2.5">
+          <Label className="text-sm font-medium">Who are you interested in dating?</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {DATING_PREFERENCE_OPTIONS.map((opt) => (
+              <ToggleChip
+                key={opt.value}
+                label={opt.label}
+                emoji={opt.emoji}
+                active={datingPreference === opt.value}
+                onClick={() => setDatingPreference(opt.value)}
+              />
+            ))}
+          </div>
+        </div>
       </CardContent>
     </>
   )

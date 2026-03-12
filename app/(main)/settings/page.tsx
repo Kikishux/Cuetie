@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/shared/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-import type { OnboardingProfile } from "@/lib/types/database";
+import type { OnboardingProfile, GenderIdentity, DatingPreference } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +62,23 @@ const challengeOptions = [
   "Asking someone out",
 ];
 
+const genderOptions: { value: GenderIdentity; label: string }[] = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "non-binary", label: "Non-binary" },
+  { value: "genderqueer", label: "Genderqueer" },
+  { value: "prefer-not-to-say", label: "Prefer not to say" },
+  { value: "other", label: "Other" },
+];
+
+const datingPreferenceOptions: { value: DatingPreference; label: string }[] = [
+  { value: "male", label: "Men" },
+  { value: "female", label: "Women" },
+  { value: "non-binary", label: "Non-binary people" },
+  { value: "genderqueer", label: "Genderqueer people" },
+  { value: "no-preference", label: "No preference" },
+];
+
 /* ───────────────── component ───────────────── */
 
 export default function SettingsPage() {
@@ -71,6 +88,9 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [coachingStyle, setCoachingStyle] =
     useState<OnboardingProfile["preferred_coaching_style"]>("gentle");
+  const [gender, setGender] = useState<GenderIdentity | undefined>(undefined);
+  const [genderCustom, setGenderCustom] = useState("");
+  const [datingPreference, setDatingPreference] = useState<DatingPreference | undefined>(undefined);
   const [challenges, setChallenges] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -90,6 +110,9 @@ export default function SettingsPage() {
       setDisplayName(data.display_name ?? "");
       const profile = data.onboarding_profile as OnboardingProfile | null;
       setCoachingStyle(profile?.preferred_coaching_style ?? "gentle");
+      setGender(profile?.gender);
+      setGenderCustom(profile?.gender_custom ?? "");
+      setDatingPreference(profile?.dating_preference);
       setChallenges(profile?.challenges ?? []);
     }
     setLoading(false);
@@ -129,6 +152,11 @@ export default function SettingsPage() {
         onboarding_profile: {
           ...existingProfile,
           preferred_coaching_style: coachingStyle,
+          gender,
+          ...(gender === "other" && genderCustom.trim()
+            ? { gender_custom: genderCustom.trim() }
+            : { gender_custom: undefined }),
+          dating_preference: datingPreference,
           challenges,
         },
       })
@@ -181,6 +209,68 @@ export default function SettingsPage() {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your preferred name"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Gender & Dating Preferences ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Gender &amp; Dating Preferences</CardTitle>
+          <CardDescription>
+            This personalizes your practice conversations so they feel
+            more realistic and relevant.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label>How do you identify?</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {genderOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGender(opt.value)}
+                  className={`rounded-lg border p-3 text-left text-sm transition-all ${
+                    gender === opt.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {gender === "other" && (
+              <Input
+                placeholder="How do you identify?"
+                value={genderCustom}
+                onChange={(e) => setGenderCustom(e.target.value)}
+                className="max-w-sm"
+              />
+            )}
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <Label>Who are you interested in dating?</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {datingPreferenceOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setDatingPreference(opt.value)}
+                  className={`rounded-lg border p-3 text-left text-sm transition-all ${
+                    datingPreference === opt.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

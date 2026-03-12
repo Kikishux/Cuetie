@@ -5,6 +5,13 @@ import { createClient } from "@/lib/supabase/server"
 const onboardingSchema = z.object({
   display_name: z.string().min(1, "Display name is required"),
   onboarding_profile: z.object({
+    gender: z
+      .enum(["male", "female", "non-binary", "genderqueer", "prefer-not-to-say", "other"])
+      .optional(),
+    gender_custom: z.string().optional(),
+    dating_preference: z
+      .enum(["male", "female", "non-binary", "genderqueer", "no-preference"])
+      .optional(),
     challenges: z.array(z.string()).optional(),
     goals: z.array(z.string()).optional(),
     preferred_coaching_style: z

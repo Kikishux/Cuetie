@@ -5,6 +5,7 @@ import type {
   Scenario,
 } from "@/lib/types/database";
 import { MAX_CONTEXT_MESSAGES } from "@/lib/ai/config";
+import { getPartnerName } from "@/lib/ai/name-pools";
 
 // ============================================================
 // System Prompt Layers
@@ -26,8 +27,9 @@ function buildIdentityLayer(): string {
   ].join("\n");
 }
 
-function buildScenarioLayer(scenario: Scenario): string {
+function buildScenarioLayer(scenario: Scenario, partnerNameOverride?: string | null): string {
   const { partner_persona: p } = scenario;
+  const name = partnerNameOverride || p.name;
   return [
     "=== SCENARIO CONTEXT ===",
     `Scenario: ${scenario.title}`,
@@ -36,7 +38,7 @@ function buildScenarioLayer(scenario: Scenario): string {
     `Coaching focus areas: ${scenario.coaching_focus.join(", ")}`,
     "",
     "--- Partner Persona ---",
-    `Name: ${p.name} | Age: ${p.age} | Occupation: ${p.occupation}`,
+    `Name: ${name} | Age: ${p.age} | Occupation: ${p.occupation}`,
     `Personality: ${p.personality_traits.join(", ")}`,
     `Backstory: ${p.backstory}`,
     `Communication style: ${p.communication_style}`,
@@ -71,6 +73,16 @@ function buildOutputFormatLayer(): string {
 function buildUserProfileLayer(profile: OnboardingProfile): string {
   const lines = ["=== USER PROFILE ==="];
 
+  if (profile.gender) {
+    const genderLabel =
+      profile.gender === "other" && profile.gender_custom
+        ? profile.gender_custom
+        : profile.gender;
+    lines.push(`Gender identity: ${genderLabel}`);
+  }
+  if (profile.dating_preference) {
+    lines.push(`Dating preference: ${profile.dating_preference}`);
+  }
   if (profile.challenges?.length) {
     lines.push(`Challenges: ${profile.challenges.join(", ")}`);
   }
@@ -129,10 +141,15 @@ export function buildChatPrompt(
   userProfile: OnboardingProfile,
   conversationHistory: Message[]
 ): ChatCompletionMessageParam[] {
+  const partnerNameOverride = getPartnerName(
+    userProfile.dating_preference,
+    scenario.sort_order
+  );
+
   const systemPrompt = [
     buildIdentityLayer(),
     "",
-    buildScenarioLayer(scenario),
+    buildScenarioLayer(scenario, partnerNameOverride),
     "",
     buildOutputFormatLayer(),
     "",

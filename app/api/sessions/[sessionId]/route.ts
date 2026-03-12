@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { ErrorResponse } from "@/lib/types/api";
-import type { Message, Scenario, Session } from "@/lib/types/database";
+import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/database";
+import { getPartnerName } from "@/lib/ai/name-pools";
 
 export async function GET(
   _request: NextRequest,
@@ -49,6 +50,26 @@ export async function GET(
       .select("*")
       .eq("id", session.scenario_id)
       .single<Scenario>();
+
+    // --- Swap partner name based on dating preference ---
+    if (scenario) {
+      const { data: userRecord } = await supabase
+        .from("users")
+        .select("onboarding_profile")
+        .eq("id", user.id)
+        .single<{ onboarding_profile: OnboardingProfile }>();
+
+      const swappedName = getPartnerName(
+        userRecord?.onboarding_profile?.dating_preference,
+        scenario.sort_order
+      );
+      if (swappedName) {
+        scenario.partner_persona = {
+          ...scenario.partner_persona,
+          name: swappedName,
+        };
+      }
+    }
 
     return NextResponse.json({ session, scenario, messages: messages ?? [] });
   } catch {

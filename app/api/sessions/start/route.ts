@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { ErrorResponse, StartSessionResponse } from "@/lib/types/api";
-import type { Message, Scenario, Session } from "@/lib/types/database";
+import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/database";
+import { getPartnerName } from "@/lib/ai/name-pools";
 
 const startSessionSchema = z.object({
   scenarioId: z.string().min(1),
@@ -88,6 +89,24 @@ export async function POST(request: NextRequest) {
       .from("sessions")
       .update({ message_count: 1 })
       .eq("id", session.id);
+
+    // --- Swap partner name based on dating preference ---
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("onboarding_profile")
+      .eq("id", user.id)
+      .single<{ onboarding_profile: OnboardingProfile }>();
+
+    const swappedName = getPartnerName(
+      userRecord?.onboarding_profile?.dating_preference,
+      scenario.sort_order
+    );
+    if (swappedName) {
+      scenario.partner_persona = {
+        ...scenario.partner_persona,
+        name: swappedName,
+      };
+    }
 
     return NextResponse.json<StartSessionResponse>({
       session: { ...session, message_count: 1 },

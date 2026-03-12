@@ -41,7 +41,25 @@ export interface User {
   updated_at: string;
 }
 
+export type GenderIdentity =
+  | "male"
+  | "female"
+  | "non-binary"
+  | "genderqueer"
+  | "prefer-not-to-say"
+  | "other";
+
+export type DatingPreference =
+  | "male"
+  | "female"
+  | "non-binary"
+  | "genderqueer"
+  | "no-preference";
+
 export interface OnboardingProfile {
+  gender?: GenderIdentity;
+  gender_custom?: string;
+  dating_preference?: DatingPreference;
   challenges?: string[];
   goals?: string[];
   comfort_level?: "beginner" | "intermediate" | "advanced";
