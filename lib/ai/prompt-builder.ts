@@ -4,6 +4,7 @@ import type {
   OnboardingProfile,
   Scenario,
 } from "@/lib/types/database";
+import type { AudioFeatures } from "@/lib/ai/voice-coaching";
 import { MAX_CONTEXT_MESSAGES } from "@/lib/ai/config";
 import { getPartnerName } from "@/lib/ai/name-pools";
 
@@ -48,8 +49,8 @@ function buildScenarioLayer(scenario: Scenario, partnerNameOverride?: string | n
   ].join("\n");
 }
 
-function buildOutputFormatLayer(): string {
-  return [
+function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
+  const schema = [
     "=== OUTPUT FORMAT ===",
     "You MUST respond with a single JSON object — no markdown, no extra text.",
     "Schema:",
@@ -65,8 +66,48 @@ function buildOutputFormatLayer(): string {
     "    },",
     '    "skill_tags": ["array of SkillId strings: empathy, question_quality, topic_flow, cue_detection, tone_matching, conversation_pacing, self_disclosure, active_listening"],',
     '    "skill_scores": { "skill_id": "number 0-10 (only include skills relevant to this turn)" }',
-    "  }",
-    "}",
+  ];
+
+  if (hasAudioFeatures) {
+    schema.push(
+      '    ,"voice_tone": {',
+      '      "detected_emotion": "string — the primary emotion you detect from the voice data: nervous, confident, warm, flat, excited, anxious, friendly, hesitant, enthusiastic",',
+      '      "confidence_level": "number 1-10 — how confident the user sounds based on pitch stability, energy, and word choice",',
+      '      "expressiveness": "number 1-10 — 1=very monotone, 10=very expressive, based on pitch and energy variability",',
+      '      "energy_match": "string — whether vocal energy matches the conversation context (e.g. too quiet for an enthusiastic topic)",',
+      '      "suggestion": "string — one specific, actionable vocal delivery tip"',
+      "    }",
+    );
+  }
+
+  schema.push("  }", "}");
+  return schema.join("\n");
+}
+
+function buildVoiceContextLayer(features: AudioFeatures): string {
+  const pitchDesc =
+    features.avgPitch < 130 ? "low" : features.avgPitch < 200 ? "moderate" : "high";
+  const variabilityDesc =
+    features.pitchVariability < 15 ? "very monotone" :
+    features.pitchVariability < 30 ? "somewhat monotone" :
+    features.pitchVariability < 50 ? "moderately expressive" : "very expressive";
+  const energyDesc =
+    features.avgEnergy < 0.03 ? "very quiet" :
+    features.avgEnergy < 0.08 ? "soft" :
+    features.avgEnergy < 0.15 ? "moderate volume" : "loud and clear";
+  const pauseDesc =
+    features.pauseRatio > 0.5 ? "many pauses (hesitant)" :
+    features.pauseRatio > 0.3 ? "some pauses" : "few pauses (flowing speech)";
+
+  return [
+    "=== VOICE ANALYSIS (from audio features) ===",
+    `Pitch: ${pitchDesc} register (${features.avgPitch}Hz avg), ${variabilityDesc} (variability: ${features.pitchVariability})`,
+    `Energy: ${energyDesc} (${features.avgEnergy} RMS), energy variability: ${features.energyVariability}`,
+    `Delivery: ${pauseDesc} (pause ratio: ${Math.round(features.pauseRatio * 100)}%)`,
+    `Speaking duration: ${features.speakingDuration}s`,
+    "",
+    "Use these voice characteristics to assess the user's vocal confidence, warmth, and expressiveness.",
+    "Provide coaching on vocal delivery in the voice_tone field of your response.",
   ].join("\n");
 }
 
@@ -134,27 +175,35 @@ function formatHistory(
  * @param scenario       - The active scenario with partner persona
  * @param userProfile    - The user's onboarding preferences
  * @param conversationHistory - All messages so far (will be windowed)
+ * @param audioFeatures  - Optional audio features from voice recording
  * @returns Array of OpenAI chat messages ready for the API
  */
 export function buildChatPrompt(
   scenario: Scenario,
   userProfile: OnboardingProfile,
-  conversationHistory: Message[]
+  conversationHistory: Message[],
+  audioFeatures?: AudioFeatures | null
 ): ChatCompletionMessageParam[] {
   const partnerNameOverride = getPartnerName(
     userProfile.dating_preference,
     scenario.sort_order
   );
 
-  const systemPrompt = [
+  const layers = [
     buildIdentityLayer(),
     "",
     buildScenarioLayer(scenario, partnerNameOverride),
     "",
-    buildOutputFormatLayer(),
+    buildOutputFormatLayer(!!audioFeatures),
     "",
     buildUserProfileLayer(userProfile),
-  ].join("\n");
+  ];
+
+  if (audioFeatures) {
+    layers.push("", buildVoiceContextLayer(audioFeatures));
+  }
+
+  const systemPrompt = layers.join("\n");
 
   return [
     { role: "system" as const, content: systemPrompt },

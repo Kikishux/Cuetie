@@ -9,13 +9,15 @@ import { Send, Mic, Square, MessageCircleHeart } from "lucide-react";
 import MessageBubble from "@/components/chat/MessageBubble";
 import type { Message } from "@/lib/types/database";
 import { useVoiceRecorder } from "@/lib/hooks/useVoiceRecorder";
+import { useAudioAnalyzer } from "@/lib/hooks/useAudioAnalyzer";
+import type { AudioFeatures } from "@/lib/ai/voice-coaching";
 
 interface ConversationPanelProps {
   messages: Message[];
   streamingText: string;
   isLoading: boolean;
   onSendMessage: (content: string) => void;
-  onSendVoiceMessage?: (audioBlob: Blob) => Promise<string | null>;
+  onSendVoiceMessage?: (audioBlob: Blob, audioFeatures?: AudioFeatures | null) => Promise<string | null>;
   onPlayAudio?: (url: string) => void;
   partnerName: string;
   voiceMode?: boolean;
@@ -54,6 +56,14 @@ export default function ConversationPanel({
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recorder = useVoiceRecorder();
+  const analyzer = useAudioAnalyzer();
+
+  // Connect analyzer when recording stream becomes available
+  useEffect(() => {
+    if (recorder.stream && recorder.state === "recording") {
+      analyzer.connect(recorder.stream);
+    }
+  }, [recorder.stream, recorder.state, analyzer]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,8 +98,9 @@ export default function ConversationPanel({
   useEffect(() => {
     if (recorder.audioBlob && recorder.state === "idle" && onSendVoiceMessage) {
       const blob = recorder.audioBlob;
+      const audioFeats = analyzer.disconnect();
       recorder.reset();
-      onSendVoiceMessage(blob).then((audioUrl) => {
+      onSendVoiceMessage(blob, audioFeats).then((audioUrl) => {
         if (audioUrl && onPlayAudio) onPlayAudio(audioUrl);
       });
     }

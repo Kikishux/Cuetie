@@ -9,6 +9,14 @@ import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/
 const sendMessageSchema = z.object({
   sessionId: z.string().min(1),
   content: z.string().min(1).max(2000),
+  audioFeatures: z.object({
+    avgPitch: z.number(),
+    pitchVariability: z.number(),
+    avgEnergy: z.number(),
+    energyVariability: z.number(),
+    pauseRatio: z.number(),
+    speakingDuration: z.number(),
+  }).optional(),
 });
 
 function sseEvent(type: string, data: unknown): string {
@@ -32,7 +40,7 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        const { sessionId, content } = parsed.data;
+        const { sessionId, content, audioFeatures } = parsed.data;
 
         // --- Authenticate ---
         const supabase = await createClient();
@@ -117,7 +125,7 @@ export async function POST(request: NextRequest) {
           .returns<Message[]>();
 
         // --- Build prompt & call OpenAI with streaming ---
-        const promptMessages = buildChatPrompt(scenario, userProfile, messages ?? []);
+        const promptMessages = buildChatPrompt(scenario, userProfile, messages ?? [], audioFeatures);
 
         const completion = await getOpenAIClient().chat.completions.create({
           model: CHAT_CONFIG.model,

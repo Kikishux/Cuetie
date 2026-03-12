@@ -146,6 +146,13 @@ export interface CoachingData {
   };
   skill_tags: SkillId[];
   skill_scores: Partial<Record<SkillId, number>>;
+  voice_tone?: {
+    detected_emotion: string;
+    confidence_level: number;
+    expressiveness: number;
+    energy_match: string;
+    suggestion: string;
+  };
 }
 
 export interface Scorecard {

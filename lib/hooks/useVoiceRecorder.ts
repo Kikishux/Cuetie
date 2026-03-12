@@ -12,10 +12,12 @@ interface UseVoiceRecorderReturn {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   reset: () => void;
+  stream: MediaStream | null;
 }
 
 export function useVoiceRecorder(): UseVoiceRecorderReturn {
   const [state, setState] = useState<RecorderState>("idle");
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [duration, setDuration] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    setStream(null);
     mediaRecorderRef.current = null;
     chunksRef.current = [];
   }, []);
@@ -48,14 +51,15 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
     chunksRef.current = [];
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = mediaStream;
+      setStream(mediaStream);
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : "audio/webm";
 
-      const recorder = new MediaRecorder(stream, { mimeType });
+      const recorder = new MediaRecorder(mediaStream, { mimeType });
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -117,5 +121,6 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
     startRecording,
     stopRecording,
     reset,
+    stream,
   };
 }

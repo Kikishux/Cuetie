@@ -1,6 +1,23 @@
 /**
- * Voice-specific coaching analysis — filler words, pacing, and response time.
+ * Voice-specific coaching analysis — filler words, pacing, response time, and tone.
  */
+
+export interface AudioFeatures {
+  avgPitch: number;          // Hz — average fundamental frequency
+  pitchVariability: number;  // stddev of pitch — monotone(low) vs expressive(high)
+  avgEnergy: number;         // RMS energy 0-1 — quiet vs loud
+  energyVariability: number; // stddev of energy — flat vs dynamic
+  pauseRatio: number;        // 0-1 — fraction of recording that's silence
+  speakingDuration: number;  // seconds of actual speech
+}
+
+export interface VoiceToneAnalysis {
+  detected_emotion: string;
+  confidence_level: number;    // 1-10
+  expressiveness: number;      // 1-10 (1=monotone, 10=very expressive)
+  energy_match: string;
+  suggestion: string;
+}
 
 export interface VoiceCoaching {
   filler_words: {
@@ -18,6 +35,7 @@ export interface VoiceCoaching {
     rating: "too-fast" | "natural" | "too-slow";
     feedback: string;
   } | null;
+  tone: VoiceToneAnalysis | null;
 }
 
 // Common filler words and phrases
@@ -137,5 +155,6 @@ export function analyzeVoiceMessage(
       responseTimeSeconds !== undefined
         ? analyzeResponseTime(responseTimeSeconds)
         : null,
+    tone: null, // Filled by GPT-4o when audio features are available
   };
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Message, CoachingData } from "@/lib/types/database";
+import type { AudioFeatures } from "@/lib/ai/voice-coaching";
 
 interface UseChatReturn {
   messages: Message[];
@@ -10,8 +11,8 @@ interface UseChatReturn {
   isStreaming: boolean;
   streamingText: string;
   error: string | null;
-  sendMessage: (content: string) => Promise<string | null>;
-  sendVoiceMessage: (audioBlob: Blob) => Promise<string | null>;
+  sendMessage: (content: string, audioFeatures?: AudioFeatures | null) => Promise<string | null>;
+  sendVoiceMessage: (audioBlob: Blob, audioFeatures?: AudioFeatures | null) => Promise<string | null>;
   loadMessages: (sessionId: string) => Promise<void>;
 }
 
@@ -47,7 +48,7 @@ export function useChat(sessionId: string): UseChatReturn {
   }, [sessionId, loadMessages]);
 
   const sendMessage = useCallback(
-    async (content: string): Promise<string | null> => {
+    async (content: string, audioFeatures?: AudioFeatures | null): Promise<string | null> => {
       if (!content.trim() || isLoading) return null;
 
       setError(null);
@@ -72,7 +73,11 @@ export function useChat(sessionId: string): UseChatReturn {
         const res = await fetch("/api/chat/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, content: content.trim() }),
+          body: JSON.stringify({
+            sessionId,
+            content: content.trim(),
+            ...(audioFeatures ? { audioFeatures } : {}),
+          }),
           signal: abortRef.current.signal,
         });
 
@@ -163,7 +168,7 @@ export function useChat(sessionId: string): UseChatReturn {
   );
 
   const sendVoiceMessage = useCallback(
-    async (audioBlob: Blob): Promise<string | null> => {
+    async (audioBlob: Blob, audioFeatures?: AudioFeatures | null): Promise<string | null> => {
       if (isLoading) return null;
 
       setError(null);
@@ -173,6 +178,9 @@ export function useChat(sessionId: string): UseChatReturn {
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
         formData.append("sessionId", sessionId);
+        if (audioFeatures) {
+          formData.append("audioFeatures", JSON.stringify(audioFeatures));
+        }
 
         const transcribeRes = await fetch("/api/voice/transcribe", {
           method: "POST",
@@ -189,8 +197,8 @@ export function useChat(sessionId: string): UseChatReturn {
         const { text } = await transcribeRes.json();
         if (!text) throw new Error("Could not understand the audio");
 
-        // --- Send transcribed text through normal chat pipeline ---
-        const partnerResponse = await sendMessage(text);
+        // --- Send transcribed text through normal chat pipeline with audio features ---
+        const partnerResponse = await sendMessage(text, audioFeatures);
 
         // --- Synthesize TTS for the partner response ---
         if (partnerResponse) {
