@@ -10,7 +10,7 @@ interface UseChatReturn {
   isStreaming: boolean;
   streamingText: string;
   error: string | null;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string) => Promise<string | null>;
   sendVoiceMessage: (audioBlob: Blob) => Promise<string | null>;
   loadMessages: (sessionId: string) => Promise<void>;
 }
@@ -47,8 +47,8 @@ export function useChat(sessionId: string): UseChatReturn {
   }, [sessionId, loadMessages]);
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      if (!content.trim() || isLoading) return;
+    async (content: string): Promise<string | null> => {
+      if (!content.trim() || isLoading) return null;
 
       setError(null);
       setIsLoading(true);
@@ -146,9 +146,12 @@ export function useChat(sessionId: string): UseChatReturn {
           created_at: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, partnerMessage]);
+        return accumulated;
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (err instanceof DOMException && err.name === "AbortError")
+          return null;
         setError(err instanceof Error ? err.message : "Something went wrong");
+        return null;
       } finally {
         setIsLoading(false);
         setIsStreaming(false);
@@ -187,22 +190,15 @@ export function useChat(sessionId: string): UseChatReturn {
         if (!text) throw new Error("Could not understand the audio");
 
         // --- Send transcribed text through normal chat pipeline ---
-        await sendMessage(text);
+        const partnerResponse = await sendMessage(text);
 
-        // --- Get the partner response for TTS ---
-        // The partner message is the last message after sendMessage completes
-        // We need to synthesize it. Get the latest partner response.
-        const latestMessages = messages;
-        const lastPartner = [...latestMessages]
-          .reverse()
-          .find((m) => m.role === "partner");
-
-        if (lastPartner?.content) {
+        // --- Synthesize TTS for the partner response ---
+        if (partnerResponse) {
           const synthRes = await fetch("/api/voice/synthesize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              text: lastPartner.content,
+              text: partnerResponse,
               sessionId,
             }),
           });
@@ -221,7 +217,7 @@ export function useChat(sessionId: string): UseChatReturn {
         return null;
       }
     },
-    [sessionId, isLoading, sendMessage, messages]
+    [sessionId, isLoading, sendMessage]
   );
 
   return {

@@ -56,8 +56,17 @@ export async function POST(request: NextRequest) {
 
     // --- Call Whisper ---
     const openai = getOpenAIClient();
+
+    // Convert to a proper File with a recognized extension
+    const audioBytes = await audioFile.arrayBuffer();
+    const file = await import("openai/uploads").then((m) =>
+      m.toFile(Buffer.from(audioBytes), "recording.webm", {
+        type: "audio/webm",
+      })
+    );
+
     const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
+      file,
       model: STT_CONFIG.model,
       language: STT_CONFIG.language,
       response_format: "verbose_json",
