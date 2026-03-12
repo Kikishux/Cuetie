@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
+import { Sparkles, MessageCircle, Mic } from "lucide-react";
 import ScenarioCard from "@/components/chat/ScenarioCard";
-import type { Scenario, DifficultyLevel } from "@/lib/types/database";
+import type { Scenario, DifficultyLevel, SessionMode } from "@/lib/types/database";
 
 const difficultyFilters: { value: string; label: string }[] = [
   { value: "all", label: "All" },
@@ -48,6 +48,7 @@ export default function PracticePage() {
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
+  const [sessionMode, setSessionMode] = useState<SessionMode>("text");
 
   useEffect(() => {
     async function fetchScenarios() {
@@ -74,7 +75,7 @@ export default function PracticePage() {
       const res = await fetch("/api/sessions/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenarioId }),
+        body: JSON.stringify({ scenarioId, mode: sessionMode }),
       });
       if (!res.ok) throw new Error("Failed to start session");
       const data = await res.json();
@@ -104,8 +105,38 @@ export default function PracticePage() {
         </p>
       </div>
 
-      {/* Difficulty filter tabs */}
-      <Tabs
+      {/* Mode toggle + Difficulty filter */}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Session mode toggle */}
+        <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+          <button
+            onClick={() => setSessionMode("text")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              sessionMode === "text"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Text
+          </button>
+          <button
+            onClick={() => setSessionMode("voice")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              sessionMode === "voice"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Mic className="h-3.5 w-3.5" />
+            Voice
+          </button>
+        </div>
+
+        {/* Difficulty filter tabs */}
+        <Tabs
         defaultValue={0}
         onValueChange={(val) => {
           const index = typeof val === "number" ? val : Number(val);
@@ -120,6 +151,7 @@ export default function PracticePage() {
           ))}
         </TabsList>
       </Tabs>
+      </div>
 
       {/* Error banner */}
       {error && (

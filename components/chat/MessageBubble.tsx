@@ -3,12 +3,14 @@
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Mic } from "lucide-react";
 import type { Message } from "@/lib/types/database";
 
 interface MessageBubbleProps {
   message: Message;
   partnerName: string;
   isStreaming?: boolean;
+  voiceMode?: boolean;
 }
 
 function formatTime(dateStr: string): string {
@@ -26,6 +28,7 @@ export default function MessageBubble({
   message,
   partnerName,
   isStreaming = false,
+  voiceMode = false,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
@@ -64,6 +67,13 @@ export default function MessageBubble({
               : "bg-muted text-foreground rounded-bl-md"
           )}
         >
+          {/* Voice mode indicator for user messages */}
+          {isUser && voiceMode && (
+            <span className="inline-flex items-center gap-1 text-primary-foreground/70 text-[10px] mb-1">
+              <Mic className="h-3 w-3" /> spoken
+            </span>
+          )}
+
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
 
           {/* Streaming cursor */}

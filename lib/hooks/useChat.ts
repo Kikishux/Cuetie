@@ -11,6 +11,7 @@ interface UseChatReturn {
   streamingText: string;
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
+  sendVoiceMessage: (audioBlob: Blob) => Promise<string | null>;
   loadMessages: (sessionId: string) => Promise<void>;
 }
 
@@ -158,6 +159,71 @@ export function useChat(sessionId: string): UseChatReturn {
     [sessionId, isLoading]
   );
 
+  const sendVoiceMessage = useCallback(
+    async (audioBlob: Blob): Promise<string | null> => {
+      if (isLoading) return null;
+
+      setError(null);
+
+      try {
+        // --- Transcribe audio ---
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.webm");
+        formData.append("sessionId", sessionId);
+
+        const transcribeRes = await fetch("/api/voice/transcribe", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!transcribeRes.ok) {
+          const errData = await transcribeRes.json().catch(() => null);
+          throw new Error(
+            errData?.error?.message ?? "Failed to transcribe audio"
+          );
+        }
+
+        const { text } = await transcribeRes.json();
+        if (!text) throw new Error("Could not understand the audio");
+
+        // --- Send transcribed text through normal chat pipeline ---
+        await sendMessage(text);
+
+        // --- Get the partner response for TTS ---
+        // The partner message is the last message after sendMessage completes
+        // We need to synthesize it. Get the latest partner response.
+        const latestMessages = messages;
+        const lastPartner = [...latestMessages]
+          .reverse()
+          .find((m) => m.role === "partner");
+
+        if (lastPartner?.content) {
+          const synthRes = await fetch("/api/voice/synthesize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: lastPartner.content,
+              sessionId,
+            }),
+          });
+
+          if (synthRes.ok) {
+            const audioBlob = await synthRes.blob();
+            return URL.createObjectURL(audioBlob);
+          }
+        }
+
+        return null;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError")
+          return null;
+        setError(err instanceof Error ? err.message : "Voice message failed");
+        return null;
+      }
+    },
+    [sessionId, isLoading, sendMessage, messages]
+  );
+
   return {
     messages,
     coaching,
@@ -166,6 +232,7 @@ export function useChat(sessionId: string): UseChatReturn {
     streamingText,
     error,
     sendMessage,
+    sendVoiceMessage,
     loadMessages,
   };
 }

@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useChat } from "@/lib/hooks/useChat";
+import { useAudioPlayer } from "@/lib/hooks/useAudioPlayer";
 import ConversationPanel from "@/components/chat/ConversationPanel";
 import CoachingPanel from "@/components/chat/CoachingPanel";
 import type { Scenario, Session } from "@/lib/types/database";
@@ -36,7 +37,12 @@ export default function SessionPage() {
     streamingText,
     error,
     sendMessage,
+    sendVoiceMessage,
   } = useChat(sessionId);
+
+  const audioPlayer = useAudioPlayer();
+
+  const isVoiceMode = session?.mode === "voice";
 
   // Fetch session + scenario data
   useEffect(() => {
@@ -85,11 +91,16 @@ export default function SessionPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold truncate">
+            <h2 className="text-sm font-semibold truncate flex items-center gap-1.5">
               {scenario?.title ?? "Loading…"}
+              {isVoiceMode && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal gap-1">
+                  🎤 Voice
+                </Badge>
+              )}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Chatting with{" "}
+              {isVoiceMode ? "Speaking" : "Chatting"} with{" "}
               <span className="font-medium text-foreground">{partnerName}</span>
             </p>
           </div>
@@ -136,7 +147,10 @@ export default function SessionPage() {
             streamingText={streamingText}
             isLoading={isLoading}
             onSendMessage={sendMessage}
+            onSendVoiceMessage={isVoiceMode ? sendVoiceMessage : undefined}
+            onPlayAudio={isVoiceMode ? (url) => audioPlayer.play(url) : undefined}
             partnerName={partnerName}
+            voiceMode={isVoiceMode}
           />
         </div>
 

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { PromptConfig } from "@/lib/types/ai";
+import type { DatingPreference } from "@/lib/types/database";
 
 // ============================================================
 // Model Configurations
@@ -18,6 +19,40 @@ export const SCORECARD_CONFIG: PromptConfig = {
   max_tokens: 2000,
   response_format: { type: "json_object" },
 };
+
+// ============================================================
+// Voice Configurations
+// ============================================================
+
+export const STT_CONFIG = {
+  model: "whisper-1" as const,
+  language: "en",
+} as const;
+
+export const TTS_CONFIG = {
+  model: "tts-1" as const,
+  defaultVoice: "alloy" as const,
+  responseFormat: "mp3" as const,
+  speed: 1.0,
+} as const;
+
+type TTSVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+
+const VOICE_MAP: Record<string, TTSVoice> = {
+  male: "echo",
+  female: "nova",
+  "non-binary": "alloy",
+  genderqueer: "fable",
+  "no-preference": "alloy",
+};
+
+/** Returns a TTS voice matched to the user's dating preference. */
+export function getVoiceForPreference(
+  datingPreference: DatingPreference | undefined
+): TTSVoice {
+  if (!datingPreference) return TTS_CONFIG.defaultVoice;
+  return VOICE_MAP[datingPreference] ?? TTS_CONFIG.defaultVoice;
+}
 
 /** Sliding window — only the most recent N messages are sent as context. */
 export const MAX_CONTEXT_MESSAGES = 20;

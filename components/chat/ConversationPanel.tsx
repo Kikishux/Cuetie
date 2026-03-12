@@ -5,16 +5,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Send, MessageCircleHeart } from "lucide-react";
+import { Send, Mic, Square, MessageCircleHeart } from "lucide-react";
 import MessageBubble from "@/components/chat/MessageBubble";
 import type { Message } from "@/lib/types/database";
+import { useVoiceRecorder } from "@/lib/hooks/useVoiceRecorder";
 
 interface ConversationPanelProps {
   messages: Message[];
   streamingText: string;
   isLoading: boolean;
   onSendMessage: (content: string) => void;
+  onSendVoiceMessage?: (audioBlob: Blob) => Promise<string | null>;
+  onPlayAudio?: (url: string) => void;
   partnerName: string;
+  voiceMode?: boolean;
 }
 
 function TypingIndicator({ name }: { name: string }) {
@@ -30,18 +34,27 @@ function TypingIndicator({ name }: { name: string }) {
   );
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function ConversationPanel({
   messages,
   streamingText,
   isLoading,
   onSendMessage,
+  onSendVoiceMessage,
+  onPlayAudio,
   partnerName,
+  voiceMode = false,
 }: ConversationPanelProps) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const recorder = useVoiceRecorder();
 
-  // Auto-scroll to bottom on new messages or streaming text
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingText]);
@@ -51,7 +64,6 @@ export default function ConversationPanel({
     if (!trimmed || isLoading) return;
     onSendMessage(trimmed);
     setInput("");
-    // Re-focus textarea after sending
     setTimeout(() => textareaRef.current?.focus(), 0);
   }, [input, isLoading, onSendMessage]);
 
@@ -62,7 +74,27 @@ export default function ConversationPanel({
     }
   };
 
-  // Build the streaming message object for display
+  // Voice recording handlers
+  const handleMicClick = useCallback(async () => {
+    if (recorder.state === "recording") {
+      recorder.stopRecording();
+    } else {
+      recorder.reset();
+      await recorder.startRecording();
+    }
+  }, [recorder]);
+
+  // Auto-send when recording stops and we have a blob
+  useEffect(() => {
+    if (recorder.audioBlob && recorder.state === "idle" && onSendVoiceMessage) {
+      const blob = recorder.audioBlob;
+      recorder.reset();
+      onSendVoiceMessage(blob).then((audioUrl) => {
+        if (audioUrl && onPlayAudio) onPlayAudio(audioUrl);
+      });
+    }
+  }, [recorder.audioBlob, recorder.state, onSendVoiceMessage, onPlayAudio, recorder]);
+
   const streamingMessage: Message | null =
     streamingText
       ? {
@@ -75,6 +107,8 @@ export default function ConversationPanel({
           created_at: new Date().toISOString(),
         }
       : null;
+
+  const isRecording = recorder.state === "recording";
 
   return (
     <div className="flex h-full flex-col">
@@ -89,8 +123,9 @@ export default function ConversationPanel({
               <div>
                 <h3 className="text-lg font-semibold">Start the conversation</h3>
                 <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-                  Say hello to begin practicing. Your coaching insights will
-                  appear on the right as you chat.
+                  {voiceMode
+                    ? "Tap the microphone to start speaking. Your coaching insights will appear on the right."
+                    : "Say hello to begin practicing. Your coaching insights will appear on the right as you chat."}
                 </p>
               </div>
             </div>
@@ -101,10 +136,10 @@ export default function ConversationPanel({
               key={msg.id}
               message={msg}
               partnerName={partnerName}
+              voiceMode={voiceMode}
             />
           ))}
 
-          {/* Streaming message */}
           {streamingMessage && (
             <MessageBubble
               message={streamingMessage}
@@ -113,7 +148,6 @@ export default function ConversationPanel({
             />
           )}
 
-          {/* Typing indicator (when loading but no text yet) */}
           {isLoading && !streamingText && (
             <TypingIndicator name={partnerName} />
           )}
@@ -124,20 +158,63 @@ export default function ConversationPanel({
 
       {/* Input area */}
       <div className="border-t bg-background/80 backdrop-blur-sm p-3">
+        {/* Recording indicator */}
+        {isRecording && (
+          <div className="flex items-center justify-center gap-2 pb-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+            </span>
+            <span className="text-sm font-medium text-red-500">
+              Recording {formatDuration(recorder.duration)}
+            </span>
+          </div>
+        )}
+
+        {recorder.error && (
+          <p className="pb-2 text-center text-xs text-destructive">
+            {recorder.error}
+          </p>
+        )}
+
         <div className="flex items-end gap-2">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message…"
-            disabled={isLoading}
+            placeholder={
+              isRecording ? "Recording…" : voiceMode ? "Type or tap 🎤 to speak…" : "Type your message…"
+            }
+            disabled={isLoading || isRecording}
             className={cn(
               "min-h-10 max-h-32 resize-none rounded-xl border-muted-foreground/20",
               "focus-visible:ring-primary/30"
             )}
             rows={1}
           />
+
+          {/* Mic button — shown in voice mode */}
+          {voiceMode && onSendVoiceMessage && (
+            <Button
+              size="icon"
+              variant={isRecording ? "destructive" : "outline"}
+              onClick={handleMicClick}
+              disabled={isLoading}
+              className={cn(
+                "shrink-0 rounded-xl h-10 w-10",
+                isRecording && "animate-pulse"
+              )}
+              aria-label={isRecording ? "Stop recording" : "Start recording"}
+            >
+              {isRecording ? (
+                <Square className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+
           <Button
             size="icon"
             onClick={handleSend}
@@ -149,7 +226,9 @@ export default function ConversationPanel({
           </Button>
         </div>
         <p className="mt-1.5 text-[10px] text-muted-foreground/50 text-center">
-          Press Enter to send · Shift+Enter for new line
+          {voiceMode
+            ? "Tap 🎤 to speak · or type and press Enter"
+            : "Press Enter to send · Shift+Enter for new line"}
         </p>
       </div>
     </div>
