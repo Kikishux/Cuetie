@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import fsp from "fs/promises";
+import path from "path";
+import os from "os";
 import { createClient } from "@/lib/supabase/server";
 import { getOpenAIClient, STT_CONFIG } from "@/lib/ai/config";
 import { analyzeVoiceMessage } from "@/lib/ai/voice-coaching";
 import type { ErrorResponse } from "@/lib/types/api";
 
 export async function POST(request: NextRequest) {
+  let tmpPath: string | null = null;
+
   try {
     // --- Authenticate ---
     const supabase = await createClient();
@@ -54,19 +60,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Call Whisper ---
+    // --- Write audio to temp file and call Whisper ---
     const openai = getOpenAIClient();
+    tmpPath = path.join(os.tmpdir(), `cuetie-${Date.now()}.webm`);
 
-    // Convert to a proper File with a recognized extension
     const audioBytes = await audioFile.arrayBuffer();
-    const file = await import("openai/uploads").then((m) =>
-      m.toFile(Buffer.from(audioBytes), "recording.webm", {
-        type: "audio/webm",
-      })
-    );
+    await fsp.writeFile(tmpPath, Buffer.from(audioBytes));
 
     const transcription = await openai.audio.transcriptions.create({
-      file,
+      file: fs.createReadStream(tmpPath),
       model: STT_CONFIG.model,
       language: STT_CONFIG.language,
       response_format: "verbose_json",
@@ -108,5 +110,9 @@ export async function POST(request: NextRequest) {
       { error: { code: "INTERNAL_ERROR", message } },
       { status: 500 }
     );
+  } finally {
+    if (tmpPath) {
+      await fsp.unlink(tmpPath).catch(() => {});
+    }
   }
 }
