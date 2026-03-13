@@ -223,7 +223,7 @@ export default function ProgressPage() {
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Score:{" "}
-                          {(skills[bestSkill] as SkillProgress).currentScore}%
+                          {(skills[bestSkill] as SkillProgress).currentScore.toFixed(1)}/10
                         </p>
                       </div>
                     </CardContent>
@@ -248,7 +248,7 @@ export default function ProgressPage() {
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Score:{" "}
-                          {(skills[weakestSkill] as SkillProgress).currentScore}%
+                          {(skills[weakestSkill] as SkillProgress).currentScore.toFixed(1)}/10
                         </p>
                       </div>
                     </CardContent>
@@ -291,7 +291,7 @@ export default function ProgressPage() {
                           stroke="hsl(var(--muted-foreground))"
                         />
                         <YAxis
-                          domain={[0, 100]}
+                          domain={[0, 10]}
                           tick={{ fontSize: 11 }}
                           stroke="hsl(var(--muted-foreground))"
                         />
@@ -346,7 +346,7 @@ export default function ProgressPage() {
                               stroke="hsl(var(--muted-foreground))"
                             />
                             <YAxis
-                              domain={[0, 100]}
+                              domain={[0, 10]}
                               tick={{ fontSize: 11 }}
                               stroke="hsl(var(--muted-foreground))"
                             />
@@ -408,7 +408,7 @@ export default function ProgressPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold tabular-nums">
-                            {skill?.currentScore ?? 0}%
+                            {(skill?.currentScore ?? 0).toFixed(1)}/10
                           </span>
                           <TrendIcon trend={skill?.trend ?? "stable"} />
                         </div>
@@ -461,14 +461,14 @@ export default function ProgressPage() {
                           <td className="py-2.5 text-right">
                             <Badge
                               variant={
-                                s.overall_score >= 80
+                                s.overall_score >= 7
                                   ? "default"
-                                  : s.overall_score >= 50
+                                  : s.overall_score >= 5
                                     ? "secondary"
                                     : "outline"
                               }
                             >
-                              {s.overall_score}%
+                              {s.overall_score.toFixed(1)}/10
                             </Badge>
                           </td>
                           <td className="py-2.5">

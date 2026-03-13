@@ -35,6 +35,7 @@ export default function SessionPage() {
   const {
     messages,
     coaching,
+    voiceCoaching,
     humeEmotions,
     humeAnalysisLimitReached,
     humeAnalysesUsed,
@@ -185,6 +186,7 @@ export default function SessionPage() {
         <div className="hidden w-80 shrink-0 border-l md:block">
           <CoachingPanel
             coaching={coaching}
+            voiceCoaching={voiceCoaching}
             sessionScores={coaching?.skill_scores}
             humeEmotions={humeEmotions}
             humeAnalysisLimitReached={humeAnalysisLimitReached}
@@ -215,6 +217,7 @@ export default function SessionPage() {
               </div>
               <CoachingPanel
                 coaching={coaching}
+                voiceCoaching={voiceCoaching}
                 sessionScores={coaching?.skill_scores}
                 humeEmotions={humeEmotions}
                 humeAnalysisLimitReached={humeAnalysisLimitReached}

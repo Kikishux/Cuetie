@@ -38,7 +38,7 @@ export function SkillRadarChart({ skills }: SkillRadarChartProps) {
   const data = (Object.keys(SKILL_LABELS) as SkillId[]).map((id) => ({
     skill: SKILL_LABELS[id],
     score: skills[id]?.currentScore ?? 0,
-    fullMark: 100,
+    fullMark: 10,
   }))
 
   return (
@@ -69,7 +69,7 @@ export function SkillRadarChart({ skills }: SkillRadarChartProps) {
                 />
                 <PolarRadiusAxis
                   angle={90}
-                  domain={[0, 100]}
+                  domain={[0, 10]}
                   tick={false}
                   axisLine={false}
                 />

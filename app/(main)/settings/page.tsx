@@ -102,6 +102,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   /* ── fetch profile ── */
   useEffect(() => {
@@ -191,8 +192,22 @@ export default function SettingsPage() {
   /* ── delete account ── */
   async function handleDelete() {
     setDeleting(true);
-    // Sign out first, actual deletion would require a server-side admin call
-    await signOut();
+    setDeleteError(null);
+
+    try {
+      const res = await fetch("/api/users/delete", { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setDeleteError(data?.error ?? "Failed to delete account");
+        setDeleting(false);
+        return;
+      }
+
+      await signOut();
+    } catch {
+      setDeleteError("Failed to delete account. Please try again.");
+      setDeleting(false);
+    }
   }
 
   if (loading) {
@@ -412,7 +427,11 @@ export default function SettingsPage() {
           <Dialog>
             <DialogTrigger
               render={
-                <Button variant="destructive" size="sm">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteError(null)}
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Account
                 </Button>
@@ -426,6 +445,9 @@ export default function SettingsPage() {
                   and all progress data will be permanently deleted.
                 </DialogDescription>
               </DialogHeader>
+              {deleteError && (
+                <p className="text-sm text-destructive">{deleteError}</p>
+              )}
               <DialogFooter>
                 <DialogClose
                   render={<Button variant="outline">Cancel</Button>}

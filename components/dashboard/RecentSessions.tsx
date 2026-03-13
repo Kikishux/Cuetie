@@ -25,8 +25,8 @@ interface RecentSessionsProps {
 }
 
 function scoreBadgeVariant(score: number) {
-  if (score >= 80) return "default"
-  if (score >= 50) return "secondary"
+  if (score >= 7) return "default"
+  if (score >= 5) return "secondary"
   return "outline"
 }
 
@@ -107,7 +107,7 @@ export function RecentSessions({ sessions }: RecentSessionsProps) {
                       </div>
                     </div>
                     <Badge variant={scoreBadgeVariant(session.overall_score)}>
-                      {session.overall_score}%
+                      {session.overall_score.toFixed(1)}/10
                     </Badge>
                     <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                   </Link>

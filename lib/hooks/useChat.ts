@@ -11,6 +11,7 @@ import type {
 interface UseChatReturn {
   messages: Message[];
   coaching: CoachingData | null;
+  voiceCoaching: VoiceCoaching | null;
   humeEmotions: HumeEmotionResult | null;
   humeAnalysisLimitReached: boolean;
   humeAnalysesUsed: number;
@@ -30,6 +31,7 @@ interface UseChatReturn {
 export function useChat(sessionId: string): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [coaching, setCoaching] = useState<CoachingData | null>(null);
+  const [voiceCoaching, setVoiceCoaching] = useState<VoiceCoaching | null>(null);
   const [humeEmotions, setHumeEmotions] = useState<HumeEmotionResult | null>(null);
   const [humeAnalysisLimitReached, setHumeAnalysisLimitReached] = useState(false);
   const [humeAnalysesUsed, setHumeAnalysesUsed] = useState(0);
@@ -54,6 +56,8 @@ export function useChat(sessionId: string): UseChatReturn {
   }, []);
 
   const loadMessages = useCallback(async (sid: string) => {
+    setVoiceCoaching(null);
+
     try {
       const res = await fetch(`/api/sessions/${sid}`);
       if (!res.ok) throw new Error("Failed to load session");
@@ -84,6 +88,9 @@ export function useChat(sessionId: string): UseChatReturn {
       if (!content.trim() || isLoading) return null;
 
       setError(null);
+      if (!pendingVoiceCoachingRef.current) {
+        setVoiceCoaching(null);
+      }
       setIsLoading(true);
       setIsStreaming(false);
       setStreamingText("");
@@ -240,6 +247,7 @@ export function useChat(sessionId: string): UseChatReturn {
         if (!text) throw new Error("Could not understand the audio");
 
         pendingVoiceCoachingRef.current = voice_coaching ?? null;
+        setVoiceCoaching(voice_coaching ?? null);
 
         const humeFormData = new FormData();
         humeFormData.append("audio", audioBlob, "recording.webm");
@@ -302,6 +310,7 @@ export function useChat(sessionId: string): UseChatReturn {
   return {
     messages,
     coaching,
+    voiceCoaching,
     humeEmotions,
     humeAnalysisLimitReached,
     humeAnalysesUsed,

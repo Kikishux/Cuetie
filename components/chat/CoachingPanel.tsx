@@ -2,15 +2,17 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
-import { BrainCircuit, Mic } from "lucide-react";
+import { BarChart3, BrainCircuit, Mic } from "lucide-react";
 import CoachingCard from "@/components/chat/CoachingCard";
 import { DeepEmotionCard } from "@/components/chat/DeepEmotionCard";
 import { PremiumUpgradePrompt } from "@/components/chat/PremiumUpgradePrompt";
+import type { VoiceCoaching } from "@/lib/ai/voice-coaching";
 import type { CoachingData, SkillId } from "@/lib/types/database";
 import type { HumeEmotionResult } from "@/lib/types/hume";
 
 interface CoachingPanelProps {
   coaching: CoachingData | null;
+  voiceCoaching?: VoiceCoaching | null;
   sessionScores?: Partial<Record<SkillId, number>>;
   humeEmotions?: HumeEmotionResult | null;
   humeAnalysisLimitReached?: boolean;
@@ -41,6 +43,7 @@ const emotionEmojis: Record<string, string> = {
 
 export default function CoachingPanel({
   coaching,
+  voiceCoaching,
   sessionScores,
   humeEmotions,
   humeAnalysisLimitReached = false,
@@ -163,6 +166,85 @@ export default function CoachingPanel({
           </p>
         </motion.div>
       )}
+
+      {/* Voice Metrics */}
+      {voiceCoaching &&
+        (voiceCoaching.filler_words.count > 0 ||
+          voiceCoaching.pacing ||
+          voiceCoaching.response_time) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3 rounded-xl border bg-card p-4"
+          >
+            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Voice Metrics
+            </h3>
+
+            {/* Filler Words */}
+            {voiceCoaching.filler_words.count > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Filler Words</span>
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    {voiceCoaching.filler_words.count} detected
+                  </span>
+                </div>
+                {voiceCoaching.filler_words.words.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Words: {voiceCoaching.filler_words.words.join(", ")}
+                  </p>
+                )}
+                <p className="border-l-2 border-amber-300/50 pl-2 text-xs italic text-muted-foreground">
+                  💡 {voiceCoaching.filler_words.feedback}
+                </p>
+              </div>
+            )}
+
+            {/* Pacing */}
+            {voiceCoaching.pacing && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Speaking Pace</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      voiceCoaching.pacing.rating === "good"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    }`}
+                  >
+                    {voiceCoaching.pacing.wpm} WPM · {voiceCoaching.pacing.rating}
+                  </span>
+                </div>
+                <p className="border-l-2 border-primary/30 pl-2 text-xs italic text-muted-foreground">
+                  💡 {voiceCoaching.pacing.feedback}
+                </p>
+              </div>
+            )}
+
+            {/* Response Time */}
+            {voiceCoaching.response_time && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Response Time</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      voiceCoaching.response_time.rating === "natural"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    }`}
+                  >
+                    {voiceCoaching.response_time.seconds.toFixed(1)}s · {voiceCoaching.response_time.rating}
+                  </span>
+                </div>
+                <p className="border-l-2 border-primary/30 pl-2 text-xs italic text-muted-foreground">
+                  💡 {voiceCoaching.response_time.feedback}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
 
       {resolvedHumeEmotions && (
         <DeepEmotionCard emotions={resolvedHumeEmotions} />
