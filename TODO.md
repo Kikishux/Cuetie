@@ -12,6 +12,9 @@
 | Scenario expansion (10→30) | Mar 13 | 20 new scenarios across all 8 categories + category filter chips + search |
 | Conversation review/replay | Mar 13 | Read-only /review page with inline coaching notes, linked from scorecard/progress/dashboard |
 | Real Message Coach | Mar 13 | New /coach page — paste dating messages, get decoded meaning, social cues, flags, 3 reply options |
+| Adaptive difficulty | Mar 13 | Recommendation API + "🎯 Recommended for You" section + scorecard suggested next scenarios |
+| Conversation personality system | Mar 13 | 6 behavioral dimensions (attachment, communication, flirtiness, emotional availability, conflict, texting style) on all 30 scenarios |
+| Post-date debrief | Mar 13 | New /debrief page with guided prompts, AI analysis of real dates, specific scenario recommendations by title |
 
 ---
 

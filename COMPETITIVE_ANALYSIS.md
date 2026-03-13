@@ -122,14 +122,14 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 
 ### Tier 3: Competitive Moat Features (3-6 Sprints)
 
-| # | Feature | Why It Creates Defensibility | Effort |
-|---|---------|------------------------------|--------|
-| 3.1 | **Therapist/coach dashboard** | Clinicians assign scenarios, review progress. Creates B2B channel | Large |
-| 3.2 | **Community practice mode** | Opt-in peer practice with AI coaching. Unique in market | Large |
-| 3.3 | **Adaptive difficulty** | AI adjusts scenarios based on skill levels. Personalized growth path | Medium |
-| 3.4 | **Conversation personality system** | AI partners with distinct styles/attachment patterns | Medium |
-| 3.5 | **Post-date debrief mode** | Describe a real date → AI analyzes, suggests what to practice next | Medium |
-| 3.6 | **Sensory-aware UX modes** | Low-stimulation, high-contrast, audio-only modes for sensory needs | Medium |
+| # | Feature | Why It Creates Defensibility | Effort | Status |
+|---|---------|------------------------------|--------|--------|
+| 3.1 | **Therapist/coach dashboard** | Clinicians assign scenarios, review progress. Creates B2B channel | Large | Pending |
+| 3.2 | **Community practice mode** | Opt-in peer practice with AI coaching. Unique in market | Large | Pending |
+| 3.3 | **Adaptive difficulty** | AI adjusts scenarios based on skill levels. Personalized growth path | Medium | ✅ Done |
+| 3.4 | **Conversation personality system** | AI partners with distinct styles/attachment patterns | Medium | ✅ Done |
+| 3.5 | **Post-date debrief mode** | Describe a real date → AI analyzes, suggests what to practice next | Medium | ✅ Done |
+| 3.6 | **Sensory-aware UX modes** | Low-stimulation, high-contrast, audio-only modes for sensory needs | Medium | Pending |
 
 ### Tier 4: Future Vision
 
