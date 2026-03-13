@@ -77,3 +77,10 @@ async function handleGoogleAuth() {
   <Separator className="flex-1" />
 </div>
 ```
+
+## Premium Test User
+
+Sam (`demo.sam@cuetie.test`) should be set to premium tier for testing:
+```sql
+UPDATE public.users SET subscription_tier = 'premium' WHERE email = 'demo.sam@cuetie.test';
+```

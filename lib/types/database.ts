@@ -37,6 +37,7 @@ export interface User {
   avatar_url: string | null;
   onboarding_profile: OnboardingProfile;
   has_onboarded: boolean;
+  subscription_tier: "free" | "premium";
   created_at: string;
   updated_at: string;
 }
@@ -153,6 +154,11 @@ export interface CoachingData {
     energy_match: string;
     suggestion: string;
   };
+  hume_emotions?: {
+    topEmotions: { name: string; score: number }[];
+    dominantEmotion: string;
+    emotionValence: "positive" | "negative" | "neutral";
+  };
 }
 
 export interface Scorecard {
@@ -180,7 +186,11 @@ export interface Scorecard {
 export interface Database {
   public: {
     Tables: {
-      users: { Row: User; Insert: Partial<User>; Update: Partial<User> };
+      users: {
+        Row: Omit<User, "subscription_tier"> & { subscription_tier: string };
+        Insert: Partial<User> & { subscription_tier?: string };
+        Update: Partial<User> & { subscription_tier?: string };
+      };
       scenarios: { Row: Scenario; Insert: Partial<Scenario>; Update: Partial<Scenario> };
       sessions: { Row: Session; Insert: Partial<Session>; Update: Partial<Session> };
       messages: { Row: Message; Insert: Partial<Message>; Update: Partial<Message> };

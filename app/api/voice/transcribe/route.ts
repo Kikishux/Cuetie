@@ -5,7 +5,7 @@ import path from "path";
 import os from "os";
 import { createClient } from "@/lib/supabase/server";
 import { getOpenAIClient, STT_CONFIG } from "@/lib/ai/config";
-import { analyzeVoiceMessage } from "@/lib/ai/voice-coaching";
+import { analyzeVoiceMessage, type AudioFeatures } from "@/lib/ai/voice-coaching";
 import type { ErrorResponse } from "@/lib/types/api";
 
 export async function POST(request: NextRequest) {
@@ -30,6 +30,24 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const audioFile = formData.get("audio") as File | null;
     const sessionId = formData.get("sessionId") as string | null;
+    const audioFeaturesRaw = formData.get("audioFeatures") as string | null;
+    let audioFeatures: AudioFeatures | null = null;
+
+    if (audioFeaturesRaw) {
+      try {
+        audioFeatures = JSON.parse(audioFeaturesRaw) as AudioFeatures;
+      } catch {
+        return NextResponse.json<ErrorResponse>(
+          {
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "audioFeatures must be valid JSON",
+            },
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!audioFile || audioFile.size === 0) {
       return NextResponse.json<ErrorResponse>(
@@ -101,6 +119,7 @@ export async function POST(request: NextRequest) {
       text,
       duration_seconds: duration,
       words,
+      audioFeatures,
       voice_coaching: voiceCoaching,
     });
   } catch (err) {

@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/shared/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-import type { OnboardingProfile, GenderIdentity, DatingPreference } from "@/lib/types/database";
+import type {
+  OnboardingProfile,
+  GenderIdentity,
+  DatingPreference,
+  User,
+} from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,6 +96,7 @@ export default function SettingsPage() {
   const [gender, setGender] = useState<GenderIdentity | undefined>(undefined);
   const [genderCustom, setGenderCustom] = useState("");
   const [datingPreference, setDatingPreference] = useState<DatingPreference | undefined>(undefined);
+  const [subscriptionTier, setSubscriptionTier] = useState<User["subscription_tier"]>("free");
   const [challenges, setChallenges] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -98,29 +104,43 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
 
   /* ── fetch profile ── */
-  const fetchProfile = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("users")
-      .select("display_name, onboarding_profile")
-      .eq("id", user.id)
-      .single();
-
-    if (data) {
-      setDisplayName(data.display_name ?? "");
-      const profile = data.onboarding_profile as OnboardingProfile | null;
-      setCoachingStyle(profile?.preferred_coaching_style ?? "gentle");
-      setGender(profile?.gender);
-      setGenderCustom(profile?.gender_custom ?? "");
-      setDatingPreference(profile?.dating_preference);
-      setChallenges(profile?.challenges ?? []);
-    }
-    setLoading(false);
-  }, [user, supabase]);
-
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const userId = user.id;
+
+    async function fetchProfile() {
+      const { data } = await supabase
+        .from("users")
+        .select("display_name, onboarding_profile, subscription_tier")
+        .eq("id", userId)
+        .single();
+
+      if (cancelled) return;
+
+      if (data) {
+        setDisplayName(data.display_name ?? "");
+        setSubscriptionTier(data.subscription_tier === "premium" ? "premium" : "free");
+        const profile = data.onboarding_profile as OnboardingProfile | null;
+        setCoachingStyle(profile?.preferred_coaching_style ?? "gentle");
+        setGender(profile?.gender);
+        setGenderCustom(profile?.gender_custom ?? "");
+        setDatingPreference(profile?.dating_preference);
+        setChallenges(profile?.challenges ?? []);
+      }
+      setLoading(false);
+    }
+
+    void fetchProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, supabase]);
 
   /* ── toggle challenge ── */
   function toggleChallenge(c: string) {
@@ -191,6 +211,35 @@ export default function SettingsPage() {
           Manage your profile and coaching preferences.
         </p>
       </div>
+
+      <Card className={subscriptionTier === "premium" ? "border-primary/30 bg-primary/[0.03]" : undefined}>
+        <CardHeader>
+          <CardTitle className="text-base">Your Plan</CardTitle>
+          <CardDescription>
+            View your current subscription and available coaching features.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Badge
+            variant={subscriptionTier === "premium" ? "default" : "secondary"}
+            className="w-fit"
+          >
+            {subscriptionTier === "premium" ? "✨ Premium Plan" : "Free Plan"}
+          </Badge>
+          <div className="space-y-1">
+            <p className="text-sm font-medium">
+              {subscriptionTier === "premium"
+                ? "Unlimited premium coaching tools are active on your account."
+                : "You&apos;re currently using Cuetie&apos;s free coaching tier."}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {subscriptionTier === "premium"
+                ? "You have access to all premium features."
+                : "Upgrade to unlock unlimited Deep Emotion Analysis."}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Display Name ── */}
       <Card>

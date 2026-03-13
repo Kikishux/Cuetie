@@ -2,16 +2,27 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Message, CoachingData } from "@/lib/types/database";
-import type { AudioFeatures } from "@/lib/ai/voice-coaching";
+import type { AudioFeatures, VoiceCoaching } from "@/lib/ai/voice-coaching";
+import type {
+  HumeAnalysisResponse,
+  HumeEmotionResult,
+} from "@/lib/types/hume";
 
 interface UseChatReturn {
   messages: Message[];
   coaching: CoachingData | null;
+  humeEmotions: HumeEmotionResult | null;
+  humeAnalysisLimitReached: boolean;
+  humeAnalysesUsed: number;
   isLoading: boolean;
   isStreaming: boolean;
   streamingText: string;
   error: string | null;
-  sendMessage: (content: string, audioFeatures?: AudioFeatures | null) => Promise<string | null>;
+  sendMessage: (
+    content: string,
+    audioFeatures?: AudioFeatures | null,
+    humeEmotionsOverride?: HumeEmotionResult | null
+  ) => Promise<string | null>;
   sendVoiceMessage: (audioBlob: Blob, audioFeatures?: AudioFeatures | null) => Promise<string | null>;
   loadMessages: (sessionId: string) => Promise<void>;
 }
@@ -19,11 +30,28 @@ interface UseChatReturn {
 export function useChat(sessionId: string): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [coaching, setCoaching] = useState<CoachingData | null>(null);
+  const [humeEmotions, setHumeEmotions] = useState<HumeEmotionResult | null>(null);
+  const [humeAnalysisLimitReached, setHumeAnalysisLimitReached] = useState(false);
+  const [humeAnalysesUsed, setHumeAnalysesUsed] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const pendingVoiceCoachingRef = useRef<VoiceCoaching | null>(null);
+
+  const mergeVoiceTone = useCallback((nextCoaching: CoachingData): CoachingData => {
+    const voiceTone = pendingVoiceCoachingRef.current?.tone;
+
+    if (!voiceTone || nextCoaching.voice_tone) {
+      return nextCoaching;
+    }
+
+    return {
+      ...nextCoaching,
+      voice_tone: voiceTone,
+    };
+  }, []);
 
   const loadMessages = useCallback(async (sid: string) => {
     try {
@@ -48,7 +76,11 @@ export function useChat(sessionId: string): UseChatReturn {
   }, [sessionId, loadMessages]);
 
   const sendMessage = useCallback(
-    async (content: string, audioFeatures?: AudioFeatures | null): Promise<string | null> => {
+    async (
+      content: string,
+      audioFeatures?: AudioFeatures | null,
+      humeEmotionsOverride?: HumeEmotionResult | null
+    ): Promise<string | null> => {
       if (!content.trim() || isLoading) return null;
 
       setError(null);
@@ -70,6 +102,7 @@ export function useChat(sessionId: string): UseChatReturn {
 
       try {
         abortRef.current = new AbortController();
+        const resolvedHumeEmotions = humeEmotionsOverride ?? humeEmotions;
         const res = await fetch("/api/chat/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -77,6 +110,7 @@ export function useChat(sessionId: string): UseChatReturn {
             sessionId,
             content: content.trim(),
             ...(audioFeatures ? { audioFeatures } : {}),
+            ...(resolvedHumeEmotions ? { humeEmotions: resolvedHumeEmotions } : {}),
           }),
           signal: abortRef.current.signal,
         });
@@ -120,7 +154,7 @@ export function useChat(sessionId: string): UseChatReturn {
                   setStreamingText(accumulated);
                   break;
                 case "coaching":
-                  partnerCoaching = event.data as CoachingData;
+                  partnerCoaching = mergeVoiceTone(event.data as CoachingData);
                   setCoaching(partnerCoaching);
                   break;
                 case "error":
@@ -164,7 +198,7 @@ export function useChat(sessionId: string): UseChatReturn {
         abortRef.current = null;
       }
     },
-    [sessionId, isLoading]
+    [sessionId, isLoading, mergeVoiceTone, humeEmotions]
   );
 
   const sendVoiceMessage = useCallback(
@@ -194,11 +228,46 @@ export function useChat(sessionId: string): UseChatReturn {
           );
         }
 
-        const { text } = await transcribeRes.json();
+        const {
+          text,
+          voice_coaching,
+          audioFeatures: transcribedAudioFeatures,
+        } = (await transcribeRes.json()) as {
+          text?: string;
+          voice_coaching?: VoiceCoaching | null;
+          audioFeatures?: AudioFeatures | null;
+        };
         if (!text) throw new Error("Could not understand the audio");
 
+        pendingVoiceCoachingRef.current = voice_coaching ?? null;
+
+        const humeFormData = new FormData();
+        humeFormData.append("audio", audioBlob, "recording.webm");
+        humeFormData.append("sessionId", sessionId);
+
+        const humePromise: Promise<HumeAnalysisResponse | null> = fetch(
+          "/api/voice/analyze-emotion",
+          {
+            method: "POST",
+            body: humeFormData,
+          }
+        )
+          .then((response) => (response.ok ? response.json() : null))
+          .catch(() => null);
+
         // --- Send transcribed text through normal chat pipeline with audio features ---
-        const partnerResponse = await sendMessage(text, audioFeatures);
+        const [partnerResponse, humeResult] = await Promise.all([
+          sendMessage(text, transcribedAudioFeatures ?? audioFeatures),
+          humePromise,
+        ]);
+
+        if (humeResult?.status === "available" && humeResult.result) {
+          setHumeEmotions(humeResult.result);
+          setHumeAnalysisLimitReached(false);
+          setHumeAnalysesUsed((prev) => prev + 1);
+        } else if (humeResult?.status === "limit_reached") {
+          setHumeAnalysisLimitReached(true);
+        }
 
         // --- Synthesize TTS for the partner response ---
         if (partnerResponse) {
@@ -223,6 +292,8 @@ export function useChat(sessionId: string): UseChatReturn {
           return null;
         setError(err instanceof Error ? err.message : "Voice message failed");
         return null;
+      } finally {
+        pendingVoiceCoachingRef.current = null;
       }
     },
     [sessionId, isLoading, sendMessage]
@@ -231,6 +302,9 @@ export function useChat(sessionId: string): UseChatReturn {
   return {
     messages,
     coaching,
+    humeEmotions,
+    humeAnalysisLimitReached,
+    humeAnalysesUsed,
     isLoading,
     isStreaming,
     streamingText,

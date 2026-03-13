@@ -18,6 +18,7 @@ import { useChat } from "@/lib/hooks/useChat";
 import { useAudioPlayer } from "@/lib/hooks/useAudioPlayer";
 import ConversationPanel from "@/components/chat/ConversationPanel";
 import CoachingPanel from "@/components/chat/CoachingPanel";
+import { HUME_FREE_PREVIEW_LIMIT } from "@/lib/subscription";
 import type { Scenario, Session } from "@/lib/types/database";
 
 export default function SessionPage() {
@@ -27,12 +28,16 @@ export default function SessionPage() {
 
   const [session, setSession] = useState<Session | null>(null);
   const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<"free" | "premium">("free");
   const [ending, setEnding] = useState(false);
   const [mobileCoachingOpen, setMobileCoachingOpen] = useState(false);
 
   const {
     messages,
     coaching,
+    humeEmotions,
+    humeAnalysisLimitReached,
+    humeAnalysesUsed,
     isLoading,
     isStreaming,
     streamingText,
@@ -59,6 +64,7 @@ export default function SessionPage() {
         const data = await res.json();
         setSession(data.session ?? data);
         setScenario(data.scenario ?? null);
+        setSubscriptionTier(data.subscriptionTier === "premium" ? "premium" : "free");
       } catch {
         // Error handled by useChat
       }
@@ -81,6 +87,7 @@ export default function SessionPage() {
   };
 
   const partnerName = scenario?.partner_persona?.name ?? "Partner";
+  const isPremiumUser = subscriptionTier === "premium";
 
   return (
     <div className="flex h-[calc(100vh-5rem)] flex-col">
@@ -168,6 +175,9 @@ export default function SessionPage() {
             onPlayAudio={voiceEnabled ? (url) => audioPlayer.play(url) : undefined}
             partnerName={partnerName}
             voiceMode={voiceEnabled}
+            humeAnalysesUsed={humeAnalysesUsed}
+            humeAnalysesLimit={HUME_FREE_PREVIEW_LIMIT}
+            isPremiumUser={isPremiumUser}
           />
         </div>
 
@@ -176,6 +186,8 @@ export default function SessionPage() {
           <CoachingPanel
             coaching={coaching}
             sessionScores={coaching?.skill_scores}
+            humeEmotions={humeEmotions}
+            humeAnalysisLimitReached={humeAnalysisLimitReached}
           />
         </div>
 
@@ -204,6 +216,8 @@ export default function SessionPage() {
               <CoachingPanel
                 coaching={coaching}
                 sessionScores={coaching?.skill_scores}
+                humeEmotions={humeEmotions}
+                humeAnalysisLimitReached={humeAnalysisLimitReached}
               />
             </div>
           </>

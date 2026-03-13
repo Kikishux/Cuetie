@@ -51,14 +51,17 @@ export async function GET(
       .eq("id", session.scenario_id)
       .single<Scenario>();
 
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("onboarding_profile, subscription_tier")
+      .eq("id", user.id)
+      .single<{
+        onboarding_profile: OnboardingProfile;
+        subscription_tier: "free" | "premium" | null;
+      }>();
+
     // --- Swap partner name based on dating preference ---
     if (scenario) {
-      const { data: userRecord } = await supabase
-        .from("users")
-        .select("onboarding_profile")
-        .eq("id", user.id)
-        .single<{ onboarding_profile: OnboardingProfile }>();
-
       const swappedName = getPartnerName(
         userRecord?.onboarding_profile?.dating_preference,
         scenario.sort_order
@@ -71,7 +74,12 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ session, scenario, messages: messages ?? [] });
+    return NextResponse.json({
+      session,
+      scenario,
+      messages: messages ?? [],
+      subscriptionTier: userRecord?.subscription_tier ?? "free",
+    });
   } catch {
     return NextResponse.json<ErrorResponse>(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error" } },

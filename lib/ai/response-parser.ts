@@ -25,12 +25,21 @@ const toneAnalysisSchema = z.object({
   rewrite: z.string().nullish(),
 });
 
+const voiceToneSchema = z.object({
+  detected_emotion: z.string(),
+  confidence_level: z.number().min(0).max(10),
+  expressiveness: z.number().min(0).max(10),
+  energy_match: z.string(),
+  suggestion: z.string(),
+}).optional();
+
 const coachingDataSchema = z.object({
   cue_decoded: z.string(),
   suggestion: z.string(),
   tone_analysis: toneAnalysisSchema,
   skill_tags: z.array(skillIdSchema),
   skill_scores: z.record(z.string(), z.number().min(0).max(10)).default({}),
+  voice_tone: voiceToneSchema,
 });
 
 export const aiResponseSchema = z.object({

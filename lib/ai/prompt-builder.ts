@@ -5,6 +5,7 @@ import type {
   Scenario,
 } from "@/lib/types/database";
 import type { AudioFeatures } from "@/lib/ai/voice-coaching";
+import type { HumeEmotionResult } from "@/lib/types/hume";
 import { MAX_CONTEXT_MESSAGES } from "@/lib/ai/config";
 import { getPartnerName } from "@/lib/ai/name-pools";
 
@@ -111,6 +112,24 @@ function buildVoiceContextLayer(features: AudioFeatures): string {
   ].join("\n");
 }
 
+function buildHumeEmotionLayer(humeEmotions: HumeEmotionResult): string {
+  const dominantScore = humeEmotions.topEmotions[0]?.score ?? 0;
+  const topEmotions = humeEmotions.topEmotions
+    .slice(0, 3)
+    .map((emotion) => `${emotion.name}: ${Math.round(emotion.score * 100)}%`)
+    .join(", ");
+
+  return [
+    "=== EMOTION ANALYSIS (from vocal prosody) ===",
+    `The user's voice expresses: ${humeEmotions.dominantEmotion} (${Math.round(dominantScore * 100)}%)`,
+    `Top emotions detected: ${topEmotions}`,
+    `Overall emotional tone: ${humeEmotions.emotionValence}`,
+    "",
+    "Use this emotional context to provide more empathetic and specific coaching.",
+    "If the user sounds anxious, acknowledge it gently. If they sound confident, reinforce it.",
+  ].join("\n");
+}
+
 function buildUserProfileLayer(profile: OnboardingProfile): string {
   const lines = ["=== USER PROFILE ==="];
 
@@ -182,7 +201,8 @@ export function buildChatPrompt(
   scenario: Scenario,
   userProfile: OnboardingProfile,
   conversationHistory: Message[],
-  audioFeatures?: AudioFeatures | null
+  audioFeatures?: AudioFeatures | null,
+  humeEmotions?: HumeEmotionResult | null
 ): ChatCompletionMessageParam[] {
   const partnerNameOverride = getPartnerName(
     userProfile.dating_preference,
@@ -201,6 +221,10 @@ export function buildChatPrompt(
 
   if (audioFeatures) {
     layers.push("", buildVoiceContextLayer(audioFeatures));
+  }
+
+  if (humeEmotions) {
+    layers.push("", buildHumeEmotionLayer(humeEmotions));
   }
 
   const systemPrompt = layers.join("\n");

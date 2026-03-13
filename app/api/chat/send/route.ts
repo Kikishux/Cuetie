@@ -6,6 +6,19 @@ import { parseAIResponse } from "@/lib/ai/response-parser";
 import { getOpenAIClient, CHAT_CONFIG } from "@/lib/ai/config";
 import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/database";
 
+const humeEmotionResultSchema = z.object({
+  topEmotions: z.array(
+    z.object({
+      name: z.string(),
+      score: z.number(),
+    })
+  ),
+  dominantEmotion: z.string(),
+  emotionValence: z.enum(["positive", "negative", "neutral"]),
+  rawScores: z.record(z.string(), z.number()),
+  analysisId: z.string().optional(),
+});
+
 const sendMessageSchema = z.object({
   sessionId: z.string().min(1),
   content: z.string().min(1).max(2000),
@@ -17,6 +30,7 @@ const sendMessageSchema = z.object({
     pauseRatio: z.number(),
     speakingDuration: z.number(),
   }).optional(),
+  humeEmotions: humeEmotionResultSchema.optional(),
 });
 
 function sseEvent(type: string, data: unknown): string {
@@ -40,7 +54,7 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        const { sessionId, content, audioFeatures } = parsed.data;
+        const { sessionId, content, audioFeatures, humeEmotions } = parsed.data;
 
         // --- Authenticate ---
         const supabase = await createClient();
@@ -125,7 +139,13 @@ export async function POST(request: NextRequest) {
           .returns<Message[]>();
 
         // --- Build prompt & call OpenAI with streaming ---
-        const promptMessages = buildChatPrompt(scenario, userProfile, messages ?? [], audioFeatures);
+        const promptMessages = buildChatPrompt(
+          scenario,
+          userProfile,
+          messages ?? [],
+          audioFeatures,
+          humeEmotions
+        );
 
         const completion = await getOpenAIClient().chat.completions.create({
           model: CHAT_CONFIG.model,

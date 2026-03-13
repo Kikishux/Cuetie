@@ -4,11 +4,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
 import { BrainCircuit, Mic } from "lucide-react";
 import CoachingCard from "@/components/chat/CoachingCard";
+import { DeepEmotionCard } from "@/components/chat/DeepEmotionCard";
+import { PremiumUpgradePrompt } from "@/components/chat/PremiumUpgradePrompt";
 import type { CoachingData, SkillId } from "@/lib/types/database";
+import type { HumeEmotionResult } from "@/lib/types/hume";
 
 interface CoachingPanelProps {
   coaching: CoachingData | null;
   sessionScores?: Partial<Record<SkillId, number>>;
+  humeEmotions?: HumeEmotionResult | null;
+  humeAnalysisLimitReached?: boolean;
 }
 
 const skillLabels: Record<SkillId, string> = {
@@ -37,6 +42,8 @@ const emotionEmojis: Record<string, string> = {
 export default function CoachingPanel({
   coaching,
   sessionScores,
+  humeEmotions,
+  humeAnalysisLimitReached = false,
 }: CoachingPanelProps) {
   const scores = sessionScores ?? coaching?.skill_scores;
   const scoreEntries = scores
@@ -46,6 +53,18 @@ export default function CoachingPanel({
     : [];
 
   const voiceTone = coaching?.voice_tone;
+  const derivedHumeEmotions: HumeEmotionResult | null = coaching?.hume_emotions
+    ? {
+        ...coaching.hume_emotions,
+        rawScores: Object.fromEntries(
+          coaching.hume_emotions.topEmotions.map((emotion) => [
+            emotion.name,
+            emotion.score,
+          ])
+        ),
+      }
+    : null;
+  const resolvedHumeEmotions = humeEmotions ?? derivedHumeEmotions;
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
@@ -144,6 +163,12 @@ export default function CoachingPanel({
           </p>
         </motion.div>
       )}
+
+      {resolvedHumeEmotions && (
+        <DeepEmotionCard emotions={resolvedHumeEmotions} />
+      )}
+
+      {humeAnalysisLimitReached && <PremiumUpgradePrompt />}
 
       {/* Session skill scores */}
       {scoreEntries.length > 0 && (

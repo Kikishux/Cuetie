@@ -21,6 +21,9 @@ interface ConversationPanelProps {
   onPlayAudio?: (url: string) => void;
   partnerName: string;
   voiceMode?: boolean;
+  humeAnalysesUsed?: number;
+  humeAnalysesLimit?: number;
+  isPremiumUser?: boolean;
 }
 
 function TypingIndicator({ name }: { name: string }) {
@@ -51,6 +54,9 @@ export default function ConversationPanel({
   onPlayAudio,
   partnerName,
   voiceMode = false,
+  humeAnalysesUsed,
+  humeAnalysesLimit,
+  isPremiumUser = false,
 }: ConversationPanelProps) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -120,6 +126,7 @@ export default function ConversationPanel({
       : null;
 
   const isRecording = recorder.state === "recording";
+  const resolvedHumeAnalysesLimit = humeAnalysesLimit ?? 3;
 
   return (
     <div className="flex h-full flex-col">
@@ -186,6 +193,20 @@ export default function ConversationPanel({
           <p className="pb-2 text-center text-xs text-destructive">
             {recorder.error}
           </p>
+        )}
+
+        {voiceMode && (isPremiumUser || humeAnalysesUsed !== undefined) && (
+          <div className="flex justify-end pb-2">
+            {isPremiumUser ? (
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                ✨ Premium
+              </span>
+            ) : (
+              <span className="rounded-full border border-primary/20 bg-primary/[0.03] px-2.5 py-1 text-[11px] font-medium text-primary">
+                Voice Coach ({humeAnalysesUsed}/{resolvedHumeAnalysesLimit})
+              </span>
+            )}
+          </div>
         )}
 
         <div className="flex items-end gap-2">
