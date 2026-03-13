@@ -112,13 +112,13 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 
 ### Tier 2: High-Impact Differentiators (Next 2-4 Sprints)
 
-| # | Feature | Why Critical | Effort |
-|---|---------|-------------|--------|
-| 2.1 | **Scenario expansion (30+ scenarios)** | 10 is too few; users exhaust content quickly. Add: video calls, texting, rejection, meeting friends | Medium |
-| 2.2 | **Conversation review/replay** | Revisit past sessions, see coaching in context, study patterns over time | Medium |
-| 2.3 | **Real message coach** | Paste actual dating app messages for coaching. Bridges practice → real life | Medium |
-| 2.4 | **Accessibility improvements** | aria-live for chat, prefers-reduced-motion, screen reader, high contrast | Medium |
-| 2.5 | **PWA / mobile app** | Install-to-homescreen with offline browsing. Competitors are mobile-first | Medium |
+| # | Feature | Why Critical | Effort | Status |
+|---|---------|-------------|--------|--------|
+| 2.1 | **Scenario expansion (30+ scenarios)** | 10 is too few; users exhaust content quickly. Add: video calls, texting, rejection, meeting friends | Medium | ✅ Done (30 scenarios + category filter + search) |
+| 2.2 | **Conversation review/replay** | Revisit past sessions, see coaching in context, study patterns over time | Medium | ✅ Done |
+| 2.3 | **Real message coach** | Paste actual dating app messages for coaching. Bridges practice → real life | Medium | ✅ Done |
+| 2.4 | **Accessibility improvements** | aria-live for chat, prefers-reduced-motion, screen reader, high contrast | Medium | Pending |
+| 2.5 | **PWA / mobile app** | Install-to-homescreen with offline browsing. Competitors are mobile-first | Medium | Pending |
 
 ### Tier 3: Competitive Moat Features (3-6 Sprints)
 

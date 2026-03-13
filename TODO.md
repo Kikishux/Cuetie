@@ -9,6 +9,9 @@
 | Fix score display bug | Mar 13 | Changed % → /10 across progress, dashboard, charts |
 | Surface voice metrics | Mar 13 | Filler words, pacing (WPM), response time now shown in coaching panel |
 | Re-enable Google OAuth | Mar 13 | Button restored with graceful error if Supabase provider not configured |
+| Scenario expansion (10→30) | Mar 13 | 20 new scenarios across all 8 categories + category filter chips + search |
+| Conversation review/replay | Mar 13 | Read-only /review page with inline coaching notes, linked from scorecard/progress/dashboard |
+| Real Message Coach | Mar 13 | New /coach page — paste dating messages, get decoded meaning, social cues, flags, 3 reply options |
 
 ---
 
