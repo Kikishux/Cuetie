@@ -102,13 +102,13 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 
 ### Tier 1: Must-Have (Next 1-2 Sprints) — Fix Credibility Gaps
 
-| # | Feature | Why Critical | Effort |
-|---|---------|-------------|--------|
-| 1.1 | **Fix account deletion** | Legal risk + trust issue for vulnerable users. Must actually delete data | Small |
-| 1.2 | **Fix score display bug** | 0-10 scores shown as percentages breaks analytics trust | Small |
-| 1.3 | **Surface hidden voice metrics** | Filler words, pacing (WPM), response time already computed but not shown | Small |
-| 1.4 | **Re-enable Google OAuth** | Reduces sign-up friction significantly | Small |
-| 1.5 | **Stripe payment integration** | Premium tier exists but can't be purchased. Revenue = zero without this | Medium |
+| # | Feature | Why Critical | Effort | Status |
+|---|---------|-------------|--------|--------|
+| 1.1 | **Fix account deletion** | Legal risk + trust issue for vulnerable users. Must actually delete data | Small | ✅ Done |
+| 1.2 | **Fix score display bug** | 0-10 scores shown as percentages breaks analytics trust | Small | ✅ Done |
+| 1.3 | **Surface hidden voice metrics** | Filler words, pacing (WPM), response time already computed but not shown | Small | ✅ Done |
+| 1.4 | **Re-enable Google OAuth** | Reduces sign-up friction significantly | Small | ✅ Done |
+| 1.5 | **Stripe payment integration** | Premium tier exists but can't be purchased. Revenue = zero without this | Medium | Pending |
 
 ### Tier 2: High-Impact Differentiators (Next 2-4 Sprints)
 
