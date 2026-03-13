@@ -75,6 +75,12 @@ export interface PartnerPersona {
   backstory: string;
   communication_style: string;
   hidden_cues: string[];
+  attachment_style?: "secure" | "anxious" | "avoidant" | "fearful-avoidant";
+  communication_pattern?: "verbose" | "concise" | "emoji-heavy" | "formal" | "casual";
+  flirtiness?: "shy" | "subtle" | "moderate" | "bold";
+  emotional_availability?: "open" | "guarded" | "walls-up";
+  conflict_style?: "avoids" | "addresses-gently" | "confrontational" | "passive-aggressive";
+  texting_style?: "instant-replier" | "slow-texter" | "double-texter" | "brief";
 }
 
 export interface Scenario {

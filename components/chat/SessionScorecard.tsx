@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -8,7 +9,6 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
@@ -26,7 +26,7 @@ import {
   TrendingUp,
   MessageSquare,
 } from "lucide-react";
-import type { Scorecard } from "@/lib/types/database";
+import type { Scorecard, Scenario } from "@/lib/types/database";
 
 interface SessionScorecardProps {
   scorecard: Scorecard;
@@ -70,13 +70,148 @@ const trendIcons = {
   new: <Sparkles className="h-3.5 w-3.5 text-blue-500" />,
 };
 
+const TITLE_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "for",
+  "of",
+  "to",
+  "your",
+  "with",
+  "next",
+  "practice",
+]);
+
+function normalizeTitle(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeTitle(value: string) {
+  return normalizeTitle(value)
+    .split(" ")
+    .filter(Boolean)
+    .filter((token) => !TITLE_STOP_WORDS.has(token));
+}
+
+function getScenarioMatchScore(suggestion: string, title: string) {
+  const normalizedSuggestion = normalizeTitle(suggestion);
+  const normalizedTitle = normalizeTitle(title);
+
+  if (!normalizedSuggestion || !normalizedTitle) {
+    return 0;
+  }
+
+  if (normalizedSuggestion === normalizedTitle) {
+    return 1;
+  }
+
+  if (
+    normalizedTitle.includes(normalizedSuggestion) ||
+    normalizedSuggestion.includes(normalizedTitle)
+  ) {
+    return 0.95;
+  }
+
+  const suggestionTokens = tokenizeTitle(suggestion);
+  const titleTokens = tokenizeTitle(title);
+  if (suggestionTokens.length === 0 || titleTokens.length === 0) {
+    return 0;
+  }
+
+  const titleTokenSet = new Set(titleTokens);
+  const sharedTokens = suggestionTokens.filter((token) => titleTokenSet.has(token));
+  if (sharedTokens.length === 0) {
+    return 0;
+  }
+
+  const overlapRatio =
+    sharedTokens.length / Math.min(suggestionTokens.length, titleTokens.length);
+
+  return sharedTokens.length >= 2 ? overlapRatio : 0;
+}
+
 export default function SessionScorecard({
   scorecard,
   onNewSession,
   onGoToDashboard,
   reviewHref,
 }: SessionScorecardProps) {
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(
+    scorecard.suggested_scenarios.length > 0
+  );
   const skillEntries = Object.entries(scorecard.skills);
+  const suggestionsKey = scorecard.suggested_scenarios.join("||");
+
+  useEffect(() => {
+    if (scorecard.suggested_scenarios.length === 0) {
+      setScenarios([]);
+      setLoadingSuggestions(false);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingSuggestions(true);
+
+    async function fetchScenarios() {
+      try {
+        const res = await fetch("/api/scenarios");
+        if (!res.ok) {
+          throw new Error("Failed to load scenarios");
+        }
+
+        const data = await res.json();
+        if (isMounted) {
+          setScenarios(data.scenarios ?? data ?? []);
+        }
+      } catch {
+        if (isMounted) {
+          setScenarios([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingSuggestions(false);
+        }
+      }
+    }
+
+    fetchScenarios();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [suggestionsKey, scorecard.suggested_scenarios.length]);
+
+  const matchedScenarios = useMemo(() => {
+    if (scorecard.suggested_scenarios.length === 0 || scenarios.length === 0) {
+      return [] as { suggestion: string; scenario: Scenario }[];
+    }
+
+    const usedScenarioIds = new Set<string>();
+
+    return scorecard.suggested_scenarios.flatMap((suggestion) => {
+      const bestMatch = scenarios
+        .filter((scenario) => !usedScenarioIds.has(scenario.id))
+        .map((scenario) => ({
+          scenario,
+          score: getScenarioMatchScore(suggestion, scenario.title),
+        }))
+        .sort((a, b) => b.score - a.score)[0];
+
+      if (!bestMatch || bestMatch.score < 0.6) {
+        return [];
+      }
+
+      usedScenarioIds.add(bestMatch.scenario.id);
+      return [{ suggestion, scenario: bestMatch.scenario }];
+    });
+  }, [scenarios, scorecard.suggested_scenarios]);
 
   return (
     <motion.div
@@ -195,20 +330,55 @@ export default function SessionScorecard({
         </Card>
       )}
 
-      {/* Suggested Scenarios */}
       {scorecard.suggested_scenarios.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Suggested Next
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {scorecard.suggested_scenarios.map((scenario) => (
-              <Badge key={scenario} variant="outline" className="text-xs">
-                {scenario}
-              </Badge>
-            ))}
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">🎯 Practice Next</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loadingSuggestions ? (
+              <p className="text-sm text-muted-foreground">
+                Finding matching scenarios...
+              </p>
+            ) : matchedScenarios.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {matchedScenarios.map(({ suggestion, scenario }, i) => (
+                  <motion.div
+                    key={`${scenario.id}-${suggestion}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + i * 0.08 }}
+                  >
+                    <Link
+                      href="/practice"
+                      className="group block rounded-xl border bg-muted/20 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold leading-6">
+                            {scenario.title}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Open Practice to start this scenario.
+                          </p>
+                        </div>
+                        <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {scorecard.suggested_scenarios.map((scenario) => (
+                  <li key={scenario} className="leading-6">
+                    {scenario}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <Separator />

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Users, Sparkles } from "lucide-react";
-import type { Scenario, DifficultyLevel } from "@/lib/types/database";
+import type { DifficultyLevel, PartnerPersona, Scenario } from "@/lib/types/database";
 
 interface ScenarioCardProps {
   scenario: Scenario;
@@ -41,9 +41,17 @@ const categoryLabels: Record<string, string> = {
   conflict_resolution: "Conflict Resolution",
 };
 
+const attachmentLabels: Record<NonNullable<PartnerPersona["attachment_style"]>, { emoji: string; label: string }> = {
+  secure: { emoji: "💚", label: "Open & Direct" },
+  anxious: { emoji: "💛", label: "Seeks Connection" },
+  avoidant: { emoji: "🔒", label: "Guarded" },
+  "fearful-avoidant": { emoji: "🌊", label: "Hot & Cold" },
+};
+
 export default function ScenarioCard({ scenario, onStart }: ScenarioCardProps) {
   const difficulty = difficultyConfig[scenario.difficulty];
   const persona = scenario.partner_persona;
+  const attachmentTag = persona.attachment_style ? attachmentLabels[persona.attachment_style] : null;
 
   return (
     <Card
@@ -88,10 +96,16 @@ export default function ScenarioCard({ scenario, onStart }: ScenarioCardProps) {
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate">{persona.name}</p>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="truncate text-sm font-medium">{persona.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
               {persona.occupation}
             </p>
+            {attachmentTag && (
+              <Badge variant="secondary" className="mt-1 gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium">
+                <span aria-hidden="true">{attachmentTag.emoji}</span>
+                {attachmentTag.label}
+              </Badge>
+            )}
           </div>
         </div>
 

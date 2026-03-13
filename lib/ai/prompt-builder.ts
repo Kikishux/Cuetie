@@ -32,7 +32,7 @@ function buildIdentityLayer(): string {
 function buildScenarioLayer(scenario: Scenario, partnerNameOverride?: string | null): string {
   const { partner_persona: p } = scenario;
   const name = partnerNameOverride || p.name;
-  return [
+  const lines = [
     "=== SCENARIO CONTEXT ===",
     `Scenario: ${scenario.title}`,
     `Description: ${scenario.description}`,
@@ -47,7 +47,27 @@ function buildScenarioLayer(scenario: Scenario, partnerNameOverride?: string | n
     "",
     "--- Hidden Cues (do NOT reveal these directly) ---",
     p.hidden_cues.map((c, i) => `${i + 1}. ${c}`).join("\n"),
-  ].join("\n");
+  ];
+
+  const dimensions: string[] = [];
+  if (p.attachment_style) dimensions.push(`Attachment style: ${p.attachment_style}`);
+  if (p.communication_pattern) dimensions.push(`Communication pattern: ${p.communication_pattern}`);
+  if (p.flirtiness) dimensions.push(`Flirtiness level: ${p.flirtiness}`);
+  if (p.emotional_availability) dimensions.push(`Emotional availability: ${p.emotional_availability}`);
+  if (p.conflict_style) dimensions.push(`Conflict style: ${p.conflict_style}`);
+  if (p.texting_style) dimensions.push(`Texting style: ${p.texting_style}`);
+
+  if (dimensions.length > 0) {
+    lines.push("");
+    lines.push("--- Partner Behavioral Dimensions ---");
+    lines.push(...dimensions);
+    lines.push("");
+    lines.push("IMPORTANT: Stay consistent with these behavioral dimensions throughout the conversation.");
+    lines.push("When providing coaching, explain social cues in terms of these dimensions.");
+    lines.push("Example: 'They changed the subject — this fits their avoidant conflict style.'");
+  }
+
+  return lines.join("\n");
 }
 
 function buildOutputFormatLayer(hasAudioFeatures: boolean): string {

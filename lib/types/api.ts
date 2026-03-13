@@ -1,4 +1,10 @@
-import type { Message, Scenario, Scorecard, Session } from "@/lib/types/database";
+import type {
+  Message,
+  Scenario,
+  Scorecard,
+  Session,
+  SkillId,
+} from "@/lib/types/database";
 
 // ============================================================
 // API Request Types
@@ -26,6 +32,17 @@ export interface StartSessionResponse {
 export interface EndSessionResponse {
   scorecard: Scorecard;
   session: Session;
+}
+
+export interface WeakSkillSummary {
+  id: SkillId;
+  score: number;
+  label: string;
+}
+
+export interface RecommendedScenariosResponse {
+  recommended: Scenario[];
+  weakSkills: WeakSkillSummary[];
 }
 
 export interface ErrorResponse {

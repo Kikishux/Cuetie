@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Sparkles, MessageCircle, Mic, Search } from "lucide-react";
@@ -14,6 +15,10 @@ import type {
   ScenarioCategory,
   SessionMode,
 } from "@/lib/types/database";
+import type {
+  RecommendedScenariosResponse,
+  WeakSkillSummary,
+} from "@/lib/types/api";
 
 const difficultyFilters: { value: string; label: string }[] = [
   { value: "all", label: "All" },
@@ -37,6 +42,45 @@ const categoryOptions: {
   { value: "deepening_connection", label: "Deepening", emoji: "💕" },
   { value: "conflict_resolution", label: "Conflict", emoji: "⚡" },
 ];
+
+const difficultyBadgeStyles: Record<
+  DifficultyLevel,
+  { label: string; className: string }
+> = {
+  beginner: {
+    label: "Beginner",
+    className:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  },
+  intermediate: {
+    label: "Intermediate",
+    className:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+  advanced: {
+    label: "Advanced",
+    className:
+      "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive",
+  },
+};
+
+const skillLabels: Record<string, string> = {
+  empathy: "Empathy",
+  question_quality: "Question Quality",
+  topic_flow: "Topic Flow",
+  cue_detection: "Cue Detection",
+  tone_matching: "Tone Matching",
+  conversation_pacing: "Conversation Pacing",
+  self_disclosure: "Self-Disclosure",
+  active_listening: "Active Listening",
+};
+
+function formatSkillLabel(skillId: string) {
+  return (
+    skillLabels[skillId] ??
+    skillId.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+  );
+}
 
 function SkeletonCard() {
   return (
@@ -66,6 +110,8 @@ function SkeletonCard() {
 export default function PracticePage() {
   const router = useRouter();
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [recommended, setRecommended] = useState<Scenario[]>([]);
+  const [weakSkills, setWeakSkills] = useState<WeakSkillSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,19 +121,55 @@ export default function PracticePage() {
   const [sessionMode, setSessionMode] = useState<SessionMode>("text");
 
   useEffect(() => {
-    async function fetchScenarios() {
+    let isMounted = true;
+
+    async function fetchPageData() {
       try {
-        const res = await fetch("/api/scenarios");
-        if (!res.ok) throw new Error("Failed to load scenarios");
-        const data = await res.json();
-        setScenarios(data.scenarios ?? data);
+        const [scenariosRes, recommendedRes] = await Promise.all([
+          fetch("/api/scenarios"),
+          fetch("/api/scenarios/recommended").catch(() => null),
+        ]);
+
+        if (!scenariosRes.ok) {
+          throw new Error("Failed to load scenarios");
+        }
+
+        const scenariosData = await scenariosRes.json();
+        if (!isMounted) {
+          return;
+        }
+
+        setScenarios(scenariosData.scenarios ?? scenariosData);
+
+        if (recommendedRes?.ok) {
+          const recommendationData: RecommendedScenariosResponse =
+            await recommendedRes.json();
+          if (!isMounted) {
+            return;
+          }
+
+          setRecommended(recommendationData.recommended ?? []);
+          setWeakSkills(recommendationData.weakSkills ?? []);
+        } else {
+          setRecommended([]);
+          setWeakSkills([]);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : "Something went wrong");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
-    fetchScenarios();
+
+    fetchPageData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleStart = async (scenarioId: string) => {
@@ -121,6 +203,7 @@ export default function PracticePage() {
         s.description.toLowerCase().includes(q)
       );
     });
+  const weakSkillIds = new Set(weakSkills.map((skill) => skill.id));
 
   return (
     <div className="space-y-6">
@@ -135,6 +218,77 @@ export default function PracticePage() {
           partner.
         </p>
       </div>
+
+      {recommended.length > 0 && (
+        <>
+          <section className="space-y-4 rounded-2xl border border-primary/10 bg-primary/5 p-4 sm:p-5">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold tracking-tight">
+                🎯 Recommended for You
+              </h2>
+              {weakSkills.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Based on your skills:{" "}
+                  {weakSkills
+                    .map(
+                      (skill) => `${skill.label} (${skill.score.toFixed(1)}/10)`
+                    )
+                    .join(", ")}
+                </p>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <div className="flex min-w-max gap-3 pb-1">
+                {recommended.map((scenario) => {
+                  const targets = scenario.coaching_focus.filter((focus) =>
+                    weakSkillIds.has(focus as WeakSkillSummary["id"])
+                  );
+                  const visibleTargets =
+                    targets.length > 0
+                      ? targets.slice(0, 3)
+                      : scenario.coaching_focus.slice(0, 3);
+                  const difficulty = difficultyBadgeStyles[scenario.difficulty];
+
+                  return (
+                    <button
+                      key={scenario.id}
+                      type="button"
+                      onClick={() => handleStart(scenario.id)}
+                      disabled={Boolean(starting)}
+                      className={cn(
+                        "w-[260px] shrink-0 rounded-xl border bg-card p-4 text-left transition-all duration-200",
+                        "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
+                        "disabled:cursor-not-allowed disabled:opacity-60"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="line-clamp-2 text-sm font-semibold leading-6">
+                          {scenario.title}
+                        </h3>
+                        <Badge
+                          className={cn(
+                            "shrink-0 border-0 text-[11px] font-semibold",
+                            difficulty.className
+                          )}
+                        >
+                          {difficulty.label}
+                        </Badge>
+                      </div>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Targets:{" "}
+                        {visibleTargets.map((skill) => formatSkillLabel(skill)).join(", ")}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <div className="h-px bg-border/60" />
+        </>
+      )}
 
       {/* Mode toggle + filters */}
       <div className="space-y-3">
