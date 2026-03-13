@@ -4,16 +4,38 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Sparkles, MessageCircle, Mic } from "lucide-react";
+import { Sparkles, MessageCircle, Mic, Search } from "lucide-react";
 import ScenarioCard from "@/components/chat/ScenarioCard";
-import type { Scenario, DifficultyLevel, SessionMode } from "@/lib/types/database";
+import type {
+  Scenario,
+  DifficultyLevel,
+  ScenarioCategory,
+  SessionMode,
+} from "@/lib/types/database";
 
 const difficultyFilters: { value: string; label: string }[] = [
   { value: "all", label: "All" },
   { value: "beginner", label: "Beginner" },
   { value: "intermediate", label: "Intermediate" },
   { value: "advanced", label: "Advanced" },
+];
+
+const categoryOptions: {
+  value: "all" | ScenarioCategory;
+  label: string;
+  emoji: string;
+}[] = [
+  { value: "all", label: "All", emoji: "📋" },
+  { value: "coffee_date", label: "Coffee Date", emoji: "☕" },
+  { value: "first_meeting", label: "First Meeting", emoji: "👋" },
+  { value: "dinner_date", label: "Dinner Date", emoji: "🍽️" },
+  { value: "texting", label: "Texting", emoji: "📱" },
+  { value: "video_call", label: "Video Call", emoji: "📹" },
+  { value: "awkward_moments", label: "Awkward", emoji: "😅" },
+  { value: "deepening_connection", label: "Deepening", emoji: "💕" },
+  { value: "conflict_resolution", label: "Conflict", emoji: "⚡" },
 ];
 
 function SkeletonCard() {
@@ -48,6 +70,8 @@ export default function PracticePage() {
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [sessionMode, setSessionMode] = useState<SessionMode>("text");
 
   useEffect(() => {
@@ -86,10 +110,17 @@ export default function PracticePage() {
     }
   };
 
-  const filtered =
-    filter === "all"
-      ? scenarios
-      : scenarios.filter((s) => s.difficulty === (filter as DifficultyLevel));
+  const filtered = scenarios
+    .filter((s) => filter === "all" || s.difficulty === (filter as DifficultyLevel))
+    .filter((s) => categoryFilter === "all" || s.category === categoryFilter)
+    .filter((s) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        s.title.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q)
+      );
+    });
 
   return (
     <div className="space-y-6">
@@ -105,52 +136,80 @@ export default function PracticePage() {
         </p>
       </div>
 
-      {/* Mode toggle + Difficulty filter */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Session mode toggle */}
-        <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
-          <button
-            onClick={() => setSessionMode("text")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              sessionMode === "text"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            Text
-          </button>
-          <button
-            onClick={() => setSessionMode("voice")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              sessionMode === "voice"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Mic className="h-3.5 w-3.5" />
-            Voice
-          </button>
+      {/* Mode toggle + filters */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Session mode toggle */}
+          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+            <button
+              onClick={() => setSessionMode("text")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                sessionMode === "text"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Text
+            </button>
+            <button
+              onClick={() => setSessionMode("voice")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                sessionMode === "voice"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Mic className="h-3.5 w-3.5" />
+              Voice
+            </button>
+          </div>
+
+          {/* Difficulty filter tabs */}
+          <Tabs value={filter} onValueChange={setFilter}>
+            <TabsList>
+              {difficultyFilters.map((difficulty) => (
+                <TabsTrigger key={difficulty.value} value={difficulty.value}>
+                  {difficulty.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Difficulty filter tabs */}
-        <Tabs
-        defaultValue={0}
-        onValueChange={(val) => {
-          const index = typeof val === "number" ? val : Number(val);
-          setFilter(difficultyFilters[index]?.value ?? "all");
-        }}
-      >
-        <TabsList>
-          {difficultyFilters.map((f, i) => (
-            <TabsTrigger key={f.value} value={i}>
-              {f.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+        <div className="snap-x overflow-x-auto">
+          <div className="flex min-w-max items-center gap-2 pb-1">
+            {categoryOptions.map((category) => (
+              <button
+                key={category.value}
+                type="button"
+                onClick={() => setCategoryFilter(category.value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  categoryFilter === category.value
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                )}
+              >
+                <span aria-hidden="true">{category.emoji}</span>
+                <span>{category.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search scenarios..."
+            className="h-10 pl-9"
+            aria-label="Search scenarios"
+          />
+        </div>
       </div>
 
       {/* Error banner */}
@@ -184,7 +243,7 @@ export default function PracticePage() {
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
         <div className="py-12 text-center text-sm text-muted-foreground">
-          No scenarios found for this difficulty level.
+          No scenarios match your filters. Try adjusting your search or filters.
         </div>
       )}
     </div>

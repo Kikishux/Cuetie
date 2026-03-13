@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   MessageCircle,
+  MessageSquareHeart,
   TrendingUp,
   Settings,
   LogOut,
@@ -22,6 +23,7 @@ import {
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/practice", label: "Practice", icon: MessageCircle },
+  { href: "/coach", label: "Coach", icon: MessageSquareHeart },
   { href: "/progress", label: "Progress", icon: TrendingUp },
 ] as const;
 

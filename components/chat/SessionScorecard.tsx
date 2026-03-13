@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -8,7 +9,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ import {
   RotateCcw,
   LayoutDashboard,
   TrendingUp,
+  MessageSquare,
 } from "lucide-react";
 import type { Scorecard } from "@/lib/types/database";
 
@@ -30,6 +32,7 @@ interface SessionScorecardProps {
   scorecard: Scorecard;
   onNewSession: () => void;
   onGoToDashboard: () => void;
+  reviewHref?: string;
 }
 
 function ScoreCircle({ score }: { score: number }) {
@@ -71,6 +74,7 @@ export default function SessionScorecard({
   scorecard,
   onNewSession,
   onGoToDashboard,
+  reviewHref,
 }: SessionScorecardProps) {
   const skillEntries = Object.entries(scorecard.skills);
 
@@ -215,6 +219,15 @@ export default function SessionScorecard({
           <RotateCcw className="h-4 w-4" />
           Practice Again
         </Button>
+        {reviewHref && (
+          <Link
+            href={reviewHref}
+            className={cn(buttonVariants({ variant: "secondary" }), "gap-2")}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Review Conversation
+          </Link>
+        )}
         <Button variant="outline" onClick={onGoToDashboard} className="gap-2">
           <LayoutDashboard className="h-4 w-4" />
           Back to Dashboard

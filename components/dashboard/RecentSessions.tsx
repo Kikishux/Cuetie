@@ -81,13 +81,16 @@ export function RecentSessions({ sessions }: RecentSessionsProps) {
           ) : (
             <ul className="divide-y divide-border">
               {sessions.map((session) => (
-                <li key={session.id}>
+                <li
+                  key={session.id}
+                  className="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-muted/50"
+                >
                   <Link
                     href={`/practice/${session.id}/score`}
-                    className="flex items-center gap-3 py-3 transition-colors hover:bg-muted/50 rounded-md px-2 -mx-2"
+                    className="flex min-w-0 flex-1 items-center gap-3"
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
                         {session.scenario_title}
                       </p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -106,11 +109,22 @@ export function RecentSessions({ sessions }: RecentSessionsProps) {
                         )}
                       </div>
                     </div>
-                    <Badge variant={scoreBadgeVariant(session.overall_score)}>
-                      {session.overall_score.toFixed(1)}/10
-                    </Badge>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                   </Link>
+
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <Link href={`/practice/${session.id}/score`}>
+                      <Badge variant={scoreBadgeVariant(session.overall_score)}>
+                        {session.overall_score.toFixed(1)}/10
+                      </Badge>
+                    </Link>
+                    <Link
+                      href={`/practice/${session.id}/review`}
+                      className="text-[11px] font-medium text-primary hover:underline"
+                    >
+                      Review conversation
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>

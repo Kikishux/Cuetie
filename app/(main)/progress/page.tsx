@@ -445,12 +445,20 @@ export default function ProgressPage() {
                       {recentSessions.map((s) => (
                         <tr key={s.id} className="group">
                           <td className="py-2.5">
-                            <Link
-                              href={`/practice/${s.id}/score`}
-                              className="font-medium hover:text-pink-600 transition-colors"
-                            >
-                              {s.scenario_title}
-                            </Link>
+                            <div className="flex flex-col items-start gap-1">
+                              <Link
+                                href={`/practice/${s.id}/score`}
+                                className="font-medium transition-colors hover:text-pink-600"
+                              >
+                                {s.scenario_title}
+                              </Link>
+                              <Link
+                                href={`/practice/${s.id}/review`}
+                                className="text-xs text-primary hover:underline"
+                              >
+                                Review
+                              </Link>
+                            </div>
                           </td>
                           <td className="py-2.5 text-muted-foreground">
                             <span className="flex items-center gap-1">

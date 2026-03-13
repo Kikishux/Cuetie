@@ -70,6 +70,7 @@ export default function ScorePage() {
         scorecard={scorecard}
         onNewSession={() => router.push("/practice")}
         onGoToDashboard={() => router.push("/dashboard")}
+        reviewHref={`/practice/${sessionId}/review`}
       />
     </div>
   );
