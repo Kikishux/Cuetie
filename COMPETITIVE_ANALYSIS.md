@@ -83,9 +83,8 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 1. **No mobile app** — web-only responsive design; competitors like Hiki/Haik are mobile-first
 2. **No community/social features** — completely solo practice; no peer connection
 3. **No payment/billing** — premium tier exists but can't be purchased (no Stripe integration)
-4. **No accessibility beyond basics** — missing aria-live for chat, reduced-motion, screen reader support
-5. **No low-stimulation / sensory-safe UX mode** — critical for target audience
-6. **No therapist/coach dashboard** — B2B channel not yet buildable
+4. **No accessibility beyond basics** — missing aria-live for chat, screen reader support
+5. **No therapist/coach dashboard** — B2B channel not yet buildable
 
 ### ✅ Previously Identified Weaknesses — Now Fixed
 
@@ -99,6 +98,7 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 | ~~No conversation review/replay~~ | Read-only `/practice/[sessionId]/review` with inline coaching notes |
 | ~~Single AI persona style~~ | **6 behavioral dimensions** (attachment, communication, flirtiness, emotional availability, conflict, texting style) on all 30 scenarios |
 | ~~No "real conversation" mode~~ | **Real Message Coach** at `/coach` — paste actual dating messages for subtext decoding + reply suggestions |
+| ~~No low-stimulation / sensory-safe UX mode~~ | **4 sensory modes** (Everyday, Soft Focus, Clear View, Quiet Session) with CSS token overrides, motion reduction, condensed coaching, system preference detection |
 
 ### Opportunities
 
@@ -147,7 +147,7 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 | 3.3 | **Adaptive difficulty** | AI adjusts scenarios based on skill levels. Personalized growth path | Medium | ✅ Done |
 | 3.4 | **Conversation personality system** | AI partners with distinct styles/attachment patterns | Medium | ✅ Done |
 | 3.5 | **Post-date debrief mode** | Describe a real date → AI analyzes, suggests what to practice next | Medium | ✅ Done |
-| 3.6 | **Sensory-aware UX modes** | Low-stimulation, high-contrast, audio-only modes for sensory needs | Medium | Pending |
+| 3.6 | **Sensory-aware UX modes** | Low-stimulation, high-contrast, audio-only modes for sensory needs | Medium | ✅ Done |
 
 ### Tier 4: Future Vision
 
@@ -177,13 +177,13 @@ vs. Noora: "We're focused on dating with adaptive difficulty and debrief tools �
 ```
 Next:       1.5 (Stripe) → 2.4 (Accessibility) → 2.5 (PWA)     (enable revenue + reach)
 Then:       S1 (Ambiguity Decoder) → S2 (Consent Coach) → S5 (Rejection Recovery)  (research-backed high-impact)
-After:      S3 (Sensory Date Prep) → S4 (Transparent Scoring) → 3.6 (Low-stim UX)  (deepen differentiation)
+After:      S3 (Sensory Date Prep) → S4 (Transparent Scoring)   (deepen differentiation)
 Later:      3.1 (Therapist Dashboard) → 3.2 (Community) → S6–S14  (build moat + B2B)
 ```
 
 ## Key Insight
 
-Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking + real-message decoding + post-date debrief. No competitor has all seven. With Tier 1 fixes complete and Tier 2–3 differentiators largely shipped, the next moat comes from **research-informed depth** (Ambiguity Decoder, Consent Coach, Sensory Planner) and **revenue enablement** (Stripe integration).
+Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking + real-message decoding + post-date debrief + sensory-aware UX. No competitor has all eight. With Tier 1 fixes complete, Tier 2–3 differentiators largely shipped, and sensory modes live, the next moat comes from **research-informed depth** (Ambiguity Decoder, Consent Coach, Sensory Date Planner) and **revenue enablement** (Stripe integration).
 
 ---
 
