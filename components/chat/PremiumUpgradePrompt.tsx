@@ -22,7 +22,7 @@ export function PremiumUpgradePrompt() {
           Deep Emotion Analysis limit reached
         </p>
         <p className="text-xs text-muted-foreground">
-          You&apos;ve used all 3 free emotion analyses this session. Upgrade to
+          You've used all 3 free emotion analyses this session. Upgrade to
           Premium for unlimited vocal insights.
         </p>
       </div>

@@ -317,11 +317,11 @@ function StepWelcome({
           <Image src="/logo.png" alt="Cuetie" width={64} height={64} className="h-16 w-16 mx-auto" />
         </div>
         <CardTitle className="text-xl">
-          Hi! I&apos;m Cuetie, your dating communication coach.
+          Hi! I'm Cuetie, your dating communication coach.
         </CardTitle>
         <CardDescription className="mt-2 text-sm leading-relaxed">
-          I&apos;m here to help you feel more confident navigating conversations.
-          Let&apos;s start with a quick intro — it only takes a minute!
+          I'm here to help you feel more confident navigating conversations.
+          Let's start with a quick intro — it only takes a minute!
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 px-6">
@@ -465,8 +465,8 @@ function StepGoals({
           What would you love to get better at?
         </CardTitle>
         <CardDescription className="mt-1 text-sm leading-relaxed">
-          Select the areas where you&apos;d like the most support.
-          We&apos;ll create practice sessions tailored just for you.
+          Select the areas where you'd like the most support.
+          We'll create practice sessions tailored just for you.
         </CardDescription>
       </CardHeader>
       <CardContent className="px-6">

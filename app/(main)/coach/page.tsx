@@ -187,9 +187,9 @@ export default function CoachPage() {
 
       <Card className="border-primary/15 bg-primary/[0.02]">
         <CardHeader>
-          <CardTitle className="text-lg">Let&apos;s look at it together</CardTitle>
+          <CardTitle className="text-lg">Let's look at it together</CardTitle>
           <CardDescription>
-            Share the message exactly as you received it. If there&apos;s a little
+            Share the message exactly as you received it. If there's a little
             backstory that would help, you can add that too.
           </CardDescription>
         </CardHeader>

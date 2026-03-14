@@ -338,7 +338,7 @@ export default function SettingsPage() {
             <p className="text-sm font-medium">
               {subscriptionTier === "premium"
                 ? "Unlimited premium coaching tools are active on your account."
-                : "You&apos;re currently using Cuetie&apos;s free coaching tier."}
+                : "You're currently using Cuetie's free coaching tier."}
             </p>
             <p className="text-sm text-muted-foreground">
               {subscriptionTier === "premium"
@@ -603,7 +603,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">Coaching Style</CardTitle>
           <CardDescription>
-            Choose how you&apos;d like your coach to communicate with you.
+            Choose how you'd like your coach to communicate with you.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -632,7 +632,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">Communication Challenges</CardTitle>
           <CardDescription>
-            Select the areas you&apos;d like to focus on. This helps
+            Select the areas you'd like to focus on. This helps
             personalize your practice.
           </CardDescription>
         </CardHeader>

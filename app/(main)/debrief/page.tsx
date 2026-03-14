@@ -166,9 +166,9 @@ export default function DebriefPage() {
 
       <Card className="border-primary/15 bg-primary/[0.02] shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg">Let&apos;s talk about your date</CardTitle>
+          <CardTitle className="text-lg">Let's talk about your date</CardTitle>
           <CardDescription>
-            You can be as detailed or as simple as you want. We&apos;ll help you sort
+            You can be as detailed or as simple as you want. We'll help you sort
             through what happened with warmth, clarity, and concrete next steps.
           </CardDescription>
         </CardHeader>
@@ -249,7 +249,7 @@ export default function DebriefPage() {
                 )}
               </Button>
               <p className="text-sm text-muted-foreground">
-                We&apos;ll focus on what felt meaningful, what felt hard, and what to
+                We'll focus on what felt meaningful, what felt hard, and what to
                 practice next.
               </p>
             </div>

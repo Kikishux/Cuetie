@@ -286,7 +286,7 @@ export default function Home() {
                     &ldquo;
                   </span>
                   <p className="relative z-10 pl-6 text-lg italic leading-relaxed text-foreground/80 sm:pl-8 sm:text-xl">
-                    Cuetie helped me understand why my messages weren&apos;t
+                    Cuetie helped me understand why my messages weren't
                     getting responses. Now I feel so much more confident
                     texting.
                   </p>
