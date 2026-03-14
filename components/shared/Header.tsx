@@ -24,7 +24,7 @@ import {
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/practice", label: "Practice", icon: MessageCircle },
-  { href: "/coach", label: "Coach", icon: MessageSquareHeart },
+  { href: "/coach", label: "Decode", icon: MessageSquareHeart },
   { href: "/debrief", label: "Debrief", icon: ClipboardCheck },
   { href: "/progress", label: "Progress", icon: TrendingUp },
 ] as const;

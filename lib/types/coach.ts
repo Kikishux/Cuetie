@@ -13,8 +13,63 @@ export interface CoachFlags {
 export interface CoachAnalysisRequest {
   message: string;
   context?: string;
+  interaction_stage?: InteractionStage;
+  user_need?: UserNeed;
 }
 
+export type InteractionStage =
+  | "just-matched"
+  | "early-texting"
+  | "after-first-date"
+  | "ongoing-dating"
+  | "other";
+
+export type UserNeed =
+  | "understand-meaning"
+  | "decide-whether-to-reply"
+  | "write-a-reply"
+  | "check-if-should-ask-directly";
+
+export type AmbiguityLevel = "low" | "medium" | "high";
+export type SupportLevel = "strong" | "some" | "weak";
+
+export interface Interpretation {
+  label: string;
+  support_level: SupportLevel;
+  explanation: string;
+  evidence_phrases: string[];
+}
+
+export interface EvidenceMarker {
+  phrase: string;
+  could_mean: string;
+  but_also: string;
+}
+
+export interface GoalResponse {
+  text: string;
+  why: string;
+  best_when: string;
+}
+
+export interface AmbiguityAnalysis {
+  best_read: string;
+  ambiguity_level: AmbiguityLevel;
+  best_next_move: string;
+  literal_meaning: string;
+  interpretations: Interpretation[];
+  evidence_markers: EvidenceMarker[];
+  responses_by_goal: {
+    warm: GoalResponse;
+    direct: GoalResponse;
+    clarifying: GoalResponse;
+    boundary: GoalResponse;
+  };
+  ask_directly_scripts: string[];
+  coaching_tip: string;
+}
+
+/** @deprecated Use AmbiguityAnalysis instead */
 export interface CoachAnalysisResponse {
   decoded_meaning: string;
   social_cues: string[];

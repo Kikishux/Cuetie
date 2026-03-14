@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { ErrorResponse } from "@/lib/types/api";
 import type {
   CoachAnalysisRequest,
-  CoachAnalysisResponse,
+  AmbiguityAnalysis,
 } from "@/lib/types/coach";
 import type { OnboardingProfile } from "@/lib/types/database";
 
@@ -13,33 +13,49 @@ const coachAnalysisRequestSchema: z.ZodType<CoachAnalysisRequest> = z.object({
   message: z.string().trim().min(1, "Message is required").max(4000),
   context: z.preprocess(
     (value) => {
-      if (typeof value !== "string") {
-        return value;
-      }
-
+      if (typeof value !== "string") return value;
       const trimmed = value.trim();
       return trimmed.length > 0 ? trimmed : undefined;
     },
     z.string().max(2000).optional()
   ),
+  interaction_stage: z.enum([
+    "just-matched", "early-texting", "after-first-date", "ongoing-dating", "other"
+  ]).optional(),
+  user_need: z.enum([
+    "understand-meaning", "decide-whether-to-reply", "write-a-reply", "check-if-should-ask-directly"
+  ]).optional(),
 });
 
-const suggestedReplySchema = z.object({
-  tone: z.string().min(1),
+const goalResponseSchema = z.object({
   text: z.string().min(1),
   why: z.string().min(1),
+  best_when: z.string().min(1),
 });
 
-const coachAnalysisResponseSchema: z.ZodType<CoachAnalysisResponse> = z.object({
-  decoded_meaning: z.string().min(1),
-  social_cues: z.array(z.string().min(1)).min(2).max(4),
-  tone: z.string().min(1),
-  flags: z.object({
-    green: z.array(z.string().min(1)),
-    yellow: z.array(z.string().min(1)),
-    red: z.array(z.string().min(1)),
+const ambiguityAnalysisSchema: z.ZodType<AmbiguityAnalysis> = z.object({
+  best_read: z.string().min(1),
+  ambiguity_level: z.enum(["low", "medium", "high"]),
+  best_next_move: z.string().min(1),
+  literal_meaning: z.string().min(1),
+  interpretations: z.array(z.object({
+    label: z.string().min(1),
+    support_level: z.enum(["strong", "some", "weak"]),
+    explanation: z.string().min(1),
+    evidence_phrases: z.array(z.string().min(1)),
+  })).min(2).max(4),
+  evidence_markers: z.array(z.object({
+    phrase: z.string().min(1),
+    could_mean: z.string().min(1),
+    but_also: z.string().min(1),
+  })).min(1).max(6),
+  responses_by_goal: z.object({
+    warm: goalResponseSchema,
+    direct: goalResponseSchema,
+    clarifying: goalResponseSchema,
+    boundary: goalResponseSchema,
   }),
-  suggested_replies: z.array(suggestedReplySchema).length(3),
+  ask_directly_scripts: z.array(z.string().min(1)).min(1).max(3),
   coaching_tip: z.string().min(1),
 });
 
@@ -47,40 +63,66 @@ function buildSystemPrompt(
   preferredCoachingStyle: NonNullable<
     OnboardingProfile["preferred_coaching_style"]
   >,
-  context?: string
+  context?: string,
+  interactionStage?: string,
+  userNeed?: string,
 ) {
+  const stageContext = interactionStage
+    ? `\nInteraction stage: ${interactionStage.replace(/-/g, " ")}`
+    : "";
+  const needContext = userNeed
+    ? `\nWhat the user needs most: ${userNeed.replace(/-/g, " ")}`
+    : "";
+
   return `You are Cuetie, a dating communication coach for autistic adults.
-You help users understand messages they receive on dating apps.
+You are an Ambiguity Decoder — you help users interpret unclear or confusing messages honestly, with explicit uncertainty.
 Your coaching style is: ${preferredCoachingStyle}
 
-The user received this message and wants help understanding it and knowing how to respond.
+The user received a message and wants help understanding what it really means.
+${context ? `Context about the situation: ${context}` : ""}${stageContext}${needContext}
 
-${context ? `Context about the situation: ${context}
+CRITICAL RULES:
+- NEVER pretend certainty about ambiguous signals. State uncertainty honestly.
+- Show EVIDENCE from the actual message words to support each interpretation.
+- Provide multiple plausible interpretations ranked by likelihood.
+- When ambiguity is high, prioritize "ask directly" as the best next move.
+- Quote specific phrases from the message as evidence.
+- Each interpretation must have at least one evidence phrase.
 
-` : ""}Analyze the message and return a JSON object with EXACTLY this structure:
+Return a JSON object with EXACTLY this structure:
 {
-  "decoded_meaning": "What this message likely means, explained clearly and concretely",
-  "social_cues": ["List 2-4 social cues or signals in the message, explained plainly"],
-  "tone": "The overall tone in 1-3 words (e.g., 'friendly and curious', 'casually interested', 'lukewarm')",
-  "flags": {
-    "green": ["Positive signals that suggest genuine interest"],
-    "yellow": ["Things to be aware of but not worry about"],
-    "red": ["Warning signs, if any — empty array if none"]
-  },
-  "suggested_replies": [
-    { "tone": "warm", "text": "A warm, friendly reply option", "why": "Brief explanation of why this works" },
-    { "tone": "playful", "text": "A lighter, more playful option", "why": "Brief explanation" },
-    { "tone": "direct", "text": "A clear, straightforward option", "why": "Brief explanation" }
+  "best_read": "The most likely overall interpretation in one clear sentence",
+  "ambiguity_level": "low" | "medium" | "high",
+  "best_next_move": "One concrete recommended action",
+  "literal_meaning": "What the words literally say, without reading between the lines",
+  "interpretations": [
+    {
+      "label": "Short label like 'Genuine interest' or 'Polite but noncommittal'",
+      "support_level": "strong" | "some" | "weak",
+      "explanation": "Why this interpretation is plausible",
+      "evidence_phrases": ["exact quoted phrases from the message that support this"]
+    }
   ],
+  "evidence_markers": [
+    {
+      "phrase": "exact phrase from the message",
+      "could_mean": "One plausible meaning of this phrase",
+      "but_also": "An alternative meaning of the same phrase"
+    }
+  ],
+  "responses_by_goal": {
+    "warm": { "text": "A warm reply", "why": "Why this works", "best_when": "When to use this" },
+    "direct": { "text": "A direct reply", "why": "Why this works", "best_when": "When to use this" },
+    "clarifying": { "text": "A reply that asks for clarity", "why": "Why this works", "best_when": "When to use this" },
+    "boundary": { "text": "A reply that sets a boundary or says no", "why": "Why this works", "best_when": "When to use this" }
+  },
+  "ask_directly_scripts": ["1-3 natural scripts for asking the person directly what they mean"],
   "coaching_tip": "One specific, actionable insight for this situation"
 }
 
-Important:
-- Explain social cues CONCRETELY — don't assume the user can read between the lines
-- Flag explanations should be specific to THIS message, not generic advice
-- Suggested replies should feel natural, not scripted
-- Keep decoded_meaning under 2 sentences
-- Return ONLY valid JSON, no markdown`;
+Provide 2-4 interpretations ordered from most to least likely.
+Provide 1-6 evidence markers for key phrases.
+Return ONLY valid JSON, no markdown.`;
 }
 
 export async function POST(request: NextRequest) {
@@ -104,7 +146,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { message, context } = parsed.data;
+    const { message, context, interaction_stage, user_need } = parsed.data;
 
     const supabase = await createClient();
     const {
@@ -136,7 +178,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "system",
-          content: buildSystemPrompt(preferredCoachingStyle, context),
+          content: buildSystemPrompt(preferredCoachingStyle, context, interaction_stage, user_need),
         },
         {
           role: "user",
@@ -180,7 +222,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsedResponse = coachAnalysisResponseSchema.safeParse(parsedContent);
+    const parsedResponse = ambiguityAnalysisSchema.safeParse(parsedContent);
 
     if (!parsedResponse.success) {
       console.error(
@@ -199,7 +241,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<CoachAnalysisResponse>(parsedResponse.data);
+    return NextResponse.json<AmbiguityAnalysis>(parsedResponse.data);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
