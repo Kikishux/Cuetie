@@ -168,3 +168,220 @@ Sprint 7+:   3.1 → 3.2 → 3.5 → 3.6        (build moat + B2B)
 Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking. No competitor has all five. The risk is that each piece is reproducible individually; the moat comes from **depth of integration** and **trust with the autistic community**.
 
 The most impactful near-term move is **Tier 2.3 (Real Message Coach)** — letting users paste actual dating app messages for coaching. This bridges practice → real life, which no competitor does, and creates daily-use engagement beyond practice sessions.
+
+---
+
+## Strategic Direction — User Research Insights
+
+> Based on qualitative research on autistic adults' romantic experiences, systematic reviews of social-skills interventions, HCI/neurodivergent UX research, and autistic community discourse patterns (Reddit r/autism, r/aspergers, Wrong Planet, autistic-led blogs/podcasts).
+
+### The Core Problem Cuetie Should Solve
+
+For autistic adults, dating is hard **not** because they "don't know the rules" in the abstract, but because dating is:
+
+1. **Highly ambiguous** — signals are weak, implicit, and inconsistent
+2. **Socially high-stakes** — rejection costs are emotionally amplified
+3. **Full of indirect communication** — sarcasm, soft rejection, implied expectations
+4. **Sensory and cognitively demanding** — noisy venues, multitasking, fatigue
+5. **Poorly served by existing tools** — either childish, neurotypical-biased, or too generic
+
+### The Biggest Unmet Need
+
+> **Help autistic adults interpret ambiguous signals, act in ways aligned with their own values, and navigate dating safely — without forcing masking.**
+
+This means Cuetie should prioritize: subtext translation with uncertainty, consent/boundary coaching, real-message coaching, sensory-aware date planning, post-date interpretation, and transparent non-patronizing feedback.
+
+---
+
+### Top Pain Points for Autistic Adults in Dating
+
+| Pain Point | What It Looks Like | Confidence | Source Types |
+|---|---|---|---|
+| **Reading interest vs friendliness** | "Are they flirting or just being nice?" | High | Qualitative studies, community forums |
+| **Understanding subtext** | Sarcasm, teasing, soft rejection, "maybe later," implied expectations | High | Qualitative studies, HCI research |
+| **Initiating/sustaining conversation** | When to self-disclose, avoiding monologues/interrogation mode | High | Intervention literature, community |
+| **Texting & dating app pragmatics** | Response timing, tone matching, when to ask out, message length | High | Community patterns, HCI research |
+| **Consent & physical escalation** | When/how to ask for touch, reading discomfort, goodbye hug/kiss | High | Sexuality education, community |
+| **Sensory overload during dates** | Noise, lights, crowds, shutdown risk, performance collapse | High | Sensory/autism research, community |
+| **Managing rejection & rumination** | Replaying conversations, ghosting distress, not knowing if it went well | High | Qualitative studies, anxiety literature |
+| **Balancing authenticity vs masking** | "Am I learning communication or pretending to be neurotypical?" | High | Self-advocacy writing, HCI critique |
+| **Interpreting voice/facial cues** | Flat affect mismatch, missing enthusiasm/discomfort cues | Medium-High | Social communication literature |
+| **Transferring practice to real life** | Canned roleplay not mapping to actual dates/messages | High | HCI transfer-of-learning research |
+
+These cluster into **6 skill buckets**:
+
+**A. Signal Interpretation** — Is this flirting, politeness, or disinterest? Is "I'm busy" a reschedule or a soft no?
+
+**B. Conversation Pragmatics** — Turn-taking, reciprocal questions, how much detail is "too much," flirting without sounding scripted
+
+**C. Subtext & "Between the Lines"** — Hints, hedging, softening, recognizing "not now" vs "never"
+
+**D. Sensory Self-Regulation** — Choosing tolerable venues, coping mid-date, planning breaks/exit routes
+
+**E. Consent, Boundaries & Physical Affection** — When/how to ask, reading hesitation, saying no, recovering from awkward moments
+
+**F. Post-Date Interpretation** — Did it go well? Should I text? Am I overthinking?
+
+---
+
+### What Autistic Adults Want from Social-Skills Tools
+
+#### ✅ What They Value Most
+
+**1. Explicit explanations, not vague advice**
+- "Here are 3 possible meanings" / "This reply may sound abrupt because…"
+- NOT "Just be confident" / "Relax and be yourself"
+- Every coaching insight should include: likely interpretation, why, uncertainty level, 2–3 valid response options
+
+**2. Concrete examples and rewrites**
+- Side-by-side rewrites, message comparison, "too intense / neutral / warm" examples
+- NOT abstract labels only ("show empathy more")
+
+**3. Adult, respectful tone**
+- Dignity, autonomy, realism, real adult dating situations
+- NOT childish, school-like, cartoonish, or parent/therapist-facing
+
+**4. Tools that acknowledge ambiguity**
+- Confidence ranges, multiple plausible interpretations
+- NOT pretending there is one correct answer in socially ambiguous situations
+
+**5. Personalization to their communication style**
+- Let users set: directness level, flirting comfort, sensory needs, "help me stay authentic" vs "help me blend in"
+- NOT one-size-fits-all neurotypical norms
+
+**6. Real-world transfer**
+- Help with actual dating app messages, actual post-date texts, actual confusion from real interactions
+- NOT fictional practice scenarios forever
+
+#### ❌ What They Find Patronizing
+
+- "It feels like it's trying to make me normal"
+- "It assumes neurotypical behavior is always better"
+- "It treats me like a child"
+- "It scores me without explaining the rubric"
+- "It tells me to make eye contact / smile more / act natural"
+- "It ignores sensory overload"
+
+---
+
+### Market Gaps — Where Cuetie Wins
+
+| Gap | Status of Market | Cuetie Opportunity |
+|---|---|---|
+| **Adult dating-specific autism support** | Tools are strongest in education/school/general social skills, weakest in flirting, dating apps, first dates, consent | Core product — already positioned here |
+| **Real-message interpretation** | Few tools let you paste a real message and get subtext + safe responses + uncertainty warnings | Strengthen existing Message Coach into signature pillar |
+| **Sensory-aware dating support** | Complete white space — no tool treats sensory regulation as part of dating success | Build Sensory-Aware Date Planner |
+| **Consent & boundary coaching** | Practical tools for asking before touch, reading hesitation, wording direct consent are rare | New dedicated skill track |
+| **Masking-safe coaching** | Most tools optimize for "pass as typical" — missing "communicate clearly while staying yourself" | Position as core brand differentiator |
+| **Transparent scoring** | AI coaches score "warmth" without making rubric visible; autistic users want to see why | Rebuild scoring with explainability |
+
+### Competitor Weaknesses by Segment
+
+| Competitor Type | Strength | Where They Fail This Audience |
+|---|---|---|
+| **Floreo / immersive tools** | Immersive practice, scenario-based | Clinician-oriented, not dating-specific, miss texting/subtext |
+| **Social Skills Solutions** | Structured explicit instruction | Didactic, not optimized for adult romance |
+| **Joon / self-regulation** | Motivation, routines, engagement | Not built for nuanced romantic communication |
+| **Mainstream dating coaches** | Know modern dating norms | Rarely autism-aware, encourage "game" over clarity |
+
+---
+
+### Effective Coaching Approaches for This Audience
+
+| Approach | Why It Works | Implementation |
+|---|---|---|
+| **Explicit instruction + rationale** | Signal → Interpretation → Why → Response options | Already doing this; deepen with uncertainty language |
+| **Frameworks first, scripts second** | Frameworks generalize; scripts help stressful moments | "Show interest = answer + reciprocate + small emotional signal" |
+| **Contrastive examples** | Show too blunt / balanced / too intense side-by-side | Add to coaching panel |
+| **Immediate feedback in context** | Right after the message, tied to exact wording | Dual-panel coaching already aligned |
+| **Gradual scaffolding** | Decode → craft → text exchange → live chat → voice → date planning | Build "Transfer Ladder" |
+| **Support uncertainty, not fake certainty** | "Likely friendly, possibly mild interest" > "She likes you" | Add confidence language to all coaching |
+| **Sensory/cognitive load accommodations** | Low-stimulation UI, predictable structure, chunked feedback, pause/replay | Build accessibility modes |
+| **Strength-based framing** | Clarity, compatibility, consent, self-advocacy — not deficit-fixing | Reframe all language |
+
+---
+
+### Risks & Concerns to Mitigate
+
+| Risk | What Users Fear | Product Response |
+|---|---|---|
+| **Masking / "being fixed"** | Pressured to suppress autistic communication style | Explicitly state: "Directness is not wrong. You choose the style" |
+| **Neurotypical bias in scoring** | Penalizing bluntness, assuming small talk is necessary | Score clarity, reciprocity, boundary awareness — not "normality" |
+| **False certainty** | AI overstating attraction/rejection → embarrassment or unsafe escalation | Use confidence bands: likely / possible / weak evidence / ask directly |
+| **Privacy concerns** | Real messages, voice samples, emotionally vulnerable content shared | Clear retention policy, easy deletion, private-by-default |
+| **Over-reliance on tool** | Users stop trusting themselves, need AI before every text | Design for scaffolding: "coach less over time," confidence mode |
+| **Shaming through scores** | "I failed being human" / "I'm bad at relationships" | Reframe as skill signals and growth markers, not worth or dateability |
+| **Safety / manipulation** | App could teach performative empathy or coercive escalation | Anchor every module in consent, mutuality, respect for no |
+
+---
+
+### Strategic Feature Roadmap (Research-Informed)
+
+#### Priority 1: Highest Impact, Good Feasibility
+
+| # | Feature | Description | Impact | Feasibility |
+|---|---------|-------------|--------|-------------|
+| S1 | **Ambiguity Decoder v2** | Upgrade message coach: literal vs implied view, interest/confidence bands, suggested replies by goal, "ask directly" option, weak-evidence warnings | Very High | High |
+| S2 | **Consent & Boundary Coaching** | Dedicated skill track: asking for touch, reading hesitation, saying no, ending dates safely, direct consent scripts | Very High | Medium |
+| S3 | **Sensory-Aware Date Prep** | Venue filters/checklist, date energy budget, overwhelm scripts, break/exit planning, post-date recovery | High | Medium |
+| S4 | **Transparent Masking-Safe Scoring** | Show rubric dimensions, explain score changes, let users choose goals (clarity/warmth/directness), separate social norms from safety | High | Medium |
+| S5 | **Rejection & Ghosting Recovery** | Classify scenario (busy/soft no/hard no/ambiguous), one follow-up rule, closure scripts, rumination containment | High | High |
+
+#### Priority 2: High Value, Moderate Complexity
+
+| # | Feature | Description | Impact | Feasibility |
+|---|---------|-------------|--------|-------------|
+| S6 | **Real-to-Practice Transfer Ladder** | Progressive modes: decode message → rewrite → simulate response → voice practice → call practice → first-date sim → debrief | High | Medium |
+| S7 | **Low-Stimulation & Accessibility Modes** | Reduced motion, calmer visual density, chunked feedback, text-only mode, keyboard/screen-reader support, audio off by default | High | Medium |
+| S8 | **Adult Scenario Expansion** | Dating apps, first-date sensory overload, soft rejection, follow-up texts, physical affection/consent, disclosing autism | High | Medium |
+| S9 | **Repair Scripts Library** | Ready-made scripts for awkward moments: "I answered too intensely," "The noise is getting to me," "Can I ask directly?" | Medium-High | High |
+
+#### Priority 3: Strategic Differentiation
+
+| # | Feature | Description | Impact | Feasibility |
+|---|---------|-------------|--------|-------------|
+| S10 | **Pattern Detection Over Time** | "You often answer well but don't reciprocate with a question" / "Under stress you become overly detailed" | Medium-High | Medium |
+| S11 | **Values-Based Personalization** | Settings: direct vs polished, sensory support level, flirting comfort, explicit consent preference, autistic-affirming vs NT-norm translation | Medium-High | Medium |
+| S12 | **Compatible-Partner Signal Library** | Teach users to spot partners comfortable with direct communication, explicit plans, sensory needs, consent | Medium | Medium |
+| S13 | **"Authentic, Not Performative" Mode** | Toggle: "Help me be clearer without masking" / "Help me understand NT norms" / "Help me find compatible people" | Medium-High | Medium |
+| S14 | **Uncertainty Meter + "Ask Directly" Prompts** | When ambiguity is high, recommend direct clarification instead of more inference — supports autistic strengths | Medium | High |
+
+---
+
+### Product Principles
+
+1. **Don't teach "normal" — teach "clear, respectful, mutually enjoyable"**
+2. **Never present ambiguous social meaning as certainty**
+3. **Optimize for compatibility, not masking**
+4. **Treat sensory regulation as part of dating success**
+5. **Prefer frameworks with examples over rigid scripts alone**
+6. **Make every score explainable**
+7. **Design for dignity, adulthood, and autonomy**
+
+---
+
+### Revised Positioning Statement
+
+> **Cuetie is the most trusted autism-affirming tool for decoding dating ambiguity, practicing clear communication, and navigating romance without forced masking — combining real-time AI coaching, voice emotion analysis, and measurable skill progression designed with autistic strengths in mind.**
+
+---
+
+### Validation: Next Steps for Primary Research
+
+Because this strategic direction is based on secondary research synthesis, validate before major roadmap commitments:
+
+**Interview Questions to Test:**
+1. Does "social coaching" feel helpful or patronizing?
+2. Do users want scoring at all? If yes, how should it be framed?
+3. Do they prefer scripts, frameworks, or both?
+4. What types of dates/messages create the most uncertainty?
+5. What feels supportive vs masking-pressure?
+
+**Recommended Studies:**
+- 12–15 semi-structured interviews with autistic adults who date or want to date
+- 2-week diary study of confusing dating-app/message moments
+- Concept testing for Ambiguity Decoder, Consent Coach, and Sensory Planner
+- Participatory co-design with autistic advisors on language, scoring, and ethics
+- Usability testing of low-stimulation mode and feedback explanations
+
+**Segment By:** dating experience level, gender/sexuality, direct vs indirect preference, sensory sensitivity, text-first vs voice-first
