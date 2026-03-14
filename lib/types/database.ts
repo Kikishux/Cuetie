@@ -57,6 +57,30 @@ export type DatingPreference =
   | "genderqueer"
   | "no-preference";
 
+export type SensoryMode = "everyday" | "soft-focus" | "clear-view" | "quiet-session";
+export type MotionPreference = "system" | "reduced" | "full";
+export type ContrastPreference = "system" | "soft" | "strong";
+export type AudioPreference = "muted" | "on";
+export type CoachingDensity = "full" | "condensed";
+
+export interface SensoryPreferences {
+  mode: SensoryMode;
+  motion: MotionPreference;
+  contrast: ContrastPreference;
+  audio: AudioPreference;
+  voice_autoplay: boolean;
+  coaching_density: CoachingDensity;
+}
+
+export const DEFAULT_SENSORY_PREFERENCES: SensoryPreferences = {
+  mode: "everyday",
+  motion: "system",
+  contrast: "system",
+  audio: "on",
+  voice_autoplay: false,
+  coaching_density: "full",
+};
+
 export interface OnboardingProfile {
   gender?: GenderIdentity;
   gender_custom?: string;
@@ -65,6 +89,7 @@ export interface OnboardingProfile {
   goals?: string[];
   comfort_level?: "beginner" | "intermediate" | "advanced";
   preferred_coaching_style?: "gentle" | "direct" | "detailed";
+  sensory_preferences?: SensoryPreferences;
 }
 
 export interface PartnerPersona {

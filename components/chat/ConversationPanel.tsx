@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Send, Mic, Square, MessageCircleHeart } from "lucide-react";
 import MessageBubble from "@/components/chat/MessageBubble";
+import { useSensoryOptional } from "@/components/shared/SensoryProvider";
 import type { Message } from "@/lib/types/database";
 import { useVoiceRecorder } from "@/lib/hooks/useVoiceRecorder";
 import { useAudioAnalyzer } from "@/lib/hooks/useAudioAnalyzer";
@@ -59,6 +60,7 @@ export default function ConversationPanel({
   isPremiumUser = false,
 }: ConversationPanelProps) {
   const [input, setInput] = useState("");
+  const { shouldAutoplay } = useSensoryOptional();
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recorder = useVoiceRecorder();
@@ -107,10 +109,10 @@ export default function ConversationPanel({
       const audioFeats = analyzer.disconnect();
       recorder.reset();
       onSendVoiceMessage(blob, audioFeats).then((audioUrl) => {
-        if (audioUrl && onPlayAudio) onPlayAudio(audioUrl);
+        if (audioUrl && onPlayAudio && shouldAutoplay) onPlayAudio(audioUrl);
       });
     }
-  }, [recorder.audioBlob, recorder.state, onSendVoiceMessage, onPlayAudio, recorder]);
+  }, [recorder.audioBlob, recorder.state, onSendVoiceMessage, onPlayAudio, recorder, shouldAutoplay]);
 
   const streamingMessage: Message | null =
     streamingText

@@ -2,13 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/shared/AuthProvider";
+import { useSensory } from "@/components/shared/SensoryProvider";
 import { createClient } from "@/lib/supabase/client";
 import type {
   OnboardingProfile,
   GenderIdentity,
   DatingPreference,
   User,
+  SensoryMode,
+  MotionPreference,
+  ContrastPreference,
+  AudioPreference,
+  CoachingDensity,
+  SensoryPreferences,
 } from "@/lib/types/database";
+import { DEFAULT_SENSORY_PREFERENCES } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,9 +40,67 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Loader2, Save, Trash2, Check } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  Trash2,
+  Check,
+  Sun,
+  Eye,
+  Sparkles,
+  Moon,
+} from "lucide-react";
 
 /* ───────────────── option data ───────────────── */
+
+const sensoryModes: {
+  value: SensoryMode;
+  label: string;
+  desc: string;
+  icon: typeof Sun;
+  tags: string[];
+}[] = [
+  {
+    value: "everyday",
+    label: "Everyday",
+    desc: "Balanced visuals with gentle structure",
+    icon: Sun,
+    tags: ["Full detail", "Light motion"],
+  },
+  {
+    value: "soft-focus",
+    label: "Soft Focus",
+    desc: "Softer visuals, reduced motion, more breathing room",
+    icon: Sparkles,
+    tags: ["Reduced motion", "Low chroma"],
+  },
+  {
+    value: "clear-view",
+    label: "Clear View",
+    desc: "Stronger contrast, clearer boundaries, explicit structure",
+    icon: Eye,
+    tags: ["Strong contrast", "Clear edges"],
+  },
+  {
+    value: "quiet-session",
+    label: "Quiet Session",
+    desc: "Lowest stimulation — a focused practice workspace",
+    icon: Moon,
+    tags: ["No motion", "Low stimulation"],
+  },
+];
+
+const motionOptions: { value: MotionPreference; label: string }[] = [
+  { value: "system", label: "Follow system" },
+  { value: "reduced", label: "Reduced" },
+  { value: "full", label: "Full" },
+];
+
+const contrastOptions: { value: ContrastPreference; label: string }[] = [
+  { value: "system", label: "Follow system" },
+  { value: "soft", label: "Softer" },
+  { value: "strong", label: "Stronger" },
+];
 
 const coachingStyles = [
   {
@@ -88,6 +154,7 @@ const datingPreferenceOptions: { value: DatingPreference; label: string }[] = [
 
 export default function SettingsPage() {
   const { user, signOut, refreshProfile } = useAuth();
+  const { preferences: sensoryPrefs, setPreferences: setSensoryPrefs } = useSensory();
   const supabase = createClient();
 
   const [displayName, setDisplayName] = useState("");
@@ -98,6 +165,12 @@ export default function SettingsPage() {
   const [datingPreference, setDatingPreference] = useState<DatingPreference | undefined>(undefined);
   const [subscriptionTier, setSubscriptionTier] = useState<User["subscription_tier"]>("free");
   const [challenges, setChallenges] = useState<string[]>([]);
+  const [sensoryMode, setSensoryMode] = useState<SensoryMode>(sensoryPrefs.mode);
+  const [motionPref, setMotionPref] = useState<MotionPreference>(sensoryPrefs.motion);
+  const [contrastPref, setContrastPref] = useState<ContrastPreference>(sensoryPrefs.contrast);
+  const [audioPref, setAudioPref] = useState<AudioPreference>(sensoryPrefs.audio);
+  const [voiceAutoplay, setVoiceAutoplay] = useState(sensoryPrefs.voice_autoplay);
+  const [coachingDensity, setCoachingDensity] = useState<CoachingDensity>(sensoryPrefs.coaching_density);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -132,6 +205,14 @@ export default function SettingsPage() {
         setGenderCustom(profile?.gender_custom ?? "");
         setDatingPreference(profile?.dating_preference);
         setChallenges(profile?.challenges ?? []);
+        const sp = profile?.sensory_preferences ?? DEFAULT_SENSORY_PREFERENCES;
+        setSensoryMode(sp.mode);
+        setMotionPref(sp.motion);
+        setContrastPref(sp.contrast);
+        setAudioPref(sp.audio);
+        setVoiceAutoplay(sp.voice_autoplay);
+        setCoachingDensity(sp.coaching_density);
+        setSensoryPrefs(sp);
       }
       setLoading(false);
     }
@@ -166,6 +247,15 @@ export default function SettingsPage() {
     const existingProfile =
       (existing?.onboarding_profile as OnboardingProfile | null) ?? {};
 
+    const sensoryPreferences: SensoryPreferences = {
+      mode: sensoryMode,
+      motion: motionPref,
+      contrast: contrastPref,
+      audio: audioPref,
+      voice_autoplay: voiceAutoplay,
+      coaching_density: coachingDensity,
+    };
+
     await supabase
       .from("users")
       .update({
@@ -179,9 +269,12 @@ export default function SettingsPage() {
             : { gender_custom: undefined }),
           dating_preference: datingPreference,
           challenges,
+          sensory_preferences: sensoryPreferences,
         },
       })
       .eq("id", user.id);
+
+    setSensoryPrefs(sensoryPreferences);
 
     await refreshProfile();
     setSaving(false);
@@ -252,6 +345,172 @@ export default function SettingsPage() {
                 ? "You have access to all premium features."
                 : "Upgrade to unlock unlimited Deep Emotion Analysis."}
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Sensory & Display ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Sensory &amp; Display</CardTitle>
+          <CardDescription>
+            Choose how Cuetie feels while you practice. You can switch anytime.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Mode selector — 2x2 grid */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {sensoryModes.map((m) => {
+              const Icon = m.icon;
+              const selected = sensoryMode === m.value;
+              return (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => {
+                    setSensoryMode(m.value);
+                    // Auto-set sensible defaults per mode
+                    if (m.value === "quiet-session") {
+                      setMotionPref("reduced");
+                      setAudioPref("muted");
+                      setCoachingDensity("condensed");
+                    } else if (m.value === "soft-focus") {
+                      setMotionPref("reduced");
+                    } else if (m.value === "clear-view") {
+                      setContrastPref("strong");
+                    } else {
+                      setMotionPref("system");
+                      setContrastPref("system");
+                      setAudioPref("on");
+                      setCoachingDensity("full");
+                    }
+                  }}
+                  className={`rounded-lg border p-4 text-left transition-colors ${
+                    selected
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-semibold">{m.label}</p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{m.desc}</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {m.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <Separator />
+
+          {/* Fine-tune controls */}
+          <div className="space-y-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Fine-tune
+            </p>
+
+            {/* Motion */}
+            <div className="space-y-2">
+              <Label className="text-sm">Motion</Label>
+              <div className="flex gap-2">
+                {motionOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setMotionPref(opt.value)}
+                    className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                      motionPref === opt.value
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border text-muted-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Contrast */}
+            <div className="space-y-2">
+              <Label className="text-sm">Contrast</Label>
+              <div className="flex gap-2">
+                {contrastOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setContrastPref(opt.value)}
+                    className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                      contrastPref === opt.value
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border text-muted-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Audio & Voice */}
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={audioPref === "muted"}
+                  onChange={(e) => setAudioPref(e.target.checked ? "muted" : "on")}
+                  className="rounded border-border"
+                />
+                Mute app sounds
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={voiceAutoplay}
+                  onChange={(e) => setVoiceAutoplay(e.target.checked)}
+                  className="rounded border-border"
+                />
+                Auto-play voice replies
+              </label>
+            </div>
+
+            {/* Coaching density */}
+            <div className="space-y-2">
+              <Label className="text-sm">Coaching detail</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCoachingDensity("full")}
+                  className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                    coachingDensity === "full"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  Full
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCoachingDensity("condensed")}
+                  className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                    coachingDensity === "condensed"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  Condensed
+                </button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

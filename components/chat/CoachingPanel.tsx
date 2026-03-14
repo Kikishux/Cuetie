@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { SafeMotion, SafeAnimatePresence } from "@/components/shared/SafeMotion";
+import { useSensoryOptional } from "@/components/shared/SensoryProvider";
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
-import { BarChart3, BrainCircuit, Mic } from "lucide-react";
+import { BarChart3, BrainCircuit, ChevronDown, ChevronUp, Mic } from "lucide-react";
 import CoachingCard from "@/components/chat/CoachingCard";
 import { DeepEmotionCard } from "@/components/chat/DeepEmotionCard";
 import { PremiumUpgradePrompt } from "@/components/chat/PremiumUpgradePrompt";
@@ -48,6 +51,8 @@ export default function CoachingPanel({
   humeEmotions,
   humeAnalysisLimitReached = false,
 }: CoachingPanelProps) {
+  const { isCondensed, isQuietSession } = useSensoryOptional();
+  const [showVoiceDetails, setShowVoiceDetails] = useState(false);
   const scores = sessionScores ?? coaching?.skill_scores;
   const scoreEntries = scores
     ? (Object.entries(scores) as [SkillId, number][]).filter(
@@ -69,6 +74,9 @@ export default function CoachingPanel({
     : null;
   const resolvedHumeEmotions = humeEmotions ?? derivedHumeEmotions;
 
+  // In condensed mode, voice details are collapsed by default
+  const shouldShowVoiceDetails = isCondensed ? showVoiceDetails : true;
+
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -76,9 +84,9 @@ export default function CoachingPanel({
         Coaching Insights
       </h2>
 
-      <AnimatePresence mode="wait">
+      <SafeAnimatePresence mode="wait">
         {coaching ? (
-          <motion.div
+          <SafeMotion
             key={coaching.cue_decoded}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -86,9 +94,9 @@ export default function CoachingPanel({
             transition={{ duration: 0.3 }}
           >
             <CoachingCard coaching={coaching} />
-          </motion.div>
+          </SafeMotion>
         ) : (
-          <motion.div
+          <SafeMotion
             key="empty"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -100,13 +108,13 @@ export default function CoachingPanel({
             <p className="text-sm text-muted-foreground">
               Start chatting to receive coaching insights
             </p>
-          </motion.div>
+          </SafeMotion>
         )}
-      </AnimatePresence>
+      </SafeAnimatePresence>
 
       {/* Voice Tone Analysis */}
       {voiceTone && (
-        <motion.div
+        <SafeMotion
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-3 rounded-xl border bg-card p-4"
@@ -114,9 +122,18 @@ export default function CoachingPanel({
           <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Mic className="h-3.5 w-3.5" />
             Vocal Delivery
+            {isCondensed && (
+              <button
+                type="button"
+                onClick={() => setShowVoiceDetails((p) => !p)}
+                className="ml-auto text-muted-foreground hover:text-foreground"
+              >
+                {showVoiceDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </button>
+            )}
           </h3>
 
-          {/* Emotion badge */}
+          {/* Emotion badge — always visible */}
           <div className="flex items-center gap-2">
             <span className="text-lg">
               {emotionEmojis[voiceTone.detected_emotion.toLowerCase()] ?? "🎤"}
@@ -124,55 +141,67 @@ export default function CoachingPanel({
             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
               {voiceTone.detected_emotion}
             </span>
+            {/* In condensed mode, show scores inline as text instead of bars */}
+            {isCondensed && !showVoiceDetails && (
+              <span className="text-xs text-muted-foreground">
+                · {voiceTone.confidence_level}/10 confidence
+              </span>
+            )}
           </div>
 
-          {/* Confidence bar */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Confidence</span>
-              <span>{voiceTone.confidence_level}/10</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-green-500 transition-all"
-                style={{ width: `${voiceTone.confidence_level * 10}%` }}
-              />
-            </div>
-          </div>
+          {/* Detailed bars — shown based on density */}
+          {shouldShowVoiceDetails && (
+            <>
+              {/* Confidence bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Confidence</span>
+                  <span>{voiceTone.confidence_level}/10</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-green-500 transition-all"
+                    style={{ width: `${voiceTone.confidence_level * 10}%` }}
+                  />
+                </div>
+              </div>
 
-          {/* Expressiveness bar */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Expressiveness</span>
-              <span>{voiceTone.expressiveness}/10</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-violet-500 transition-all"
-                style={{ width: `${voiceTone.expressiveness * 10}%` }}
-              />
-            </div>
-          </div>
+              {/* Expressiveness bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Expressiveness</span>
+                  <span>{voiceTone.expressiveness}/10</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-violet-500 transition-all"
+                    style={{ width: `${voiceTone.expressiveness * 10}%` }}
+                  />
+                </div>
+              </div>
 
-          {/* Energy match */}
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Energy:</span>{" "}
-            {voiceTone.energy_match}
-          </p>
+              {/* Energy match */}
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Energy:</span>{" "}
+                {voiceTone.energy_match}
+              </p>
+            </>
+          )}
 
-          {/* Vocal tip */}
+          {/* Vocal tip — always visible */}
           <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">
             💡 {voiceTone.suggestion}
           </p>
-        </motion.div>
+        </SafeMotion>
       )}
 
-      {/* Voice Metrics */}
+      {/* Voice Metrics — collapsed in condensed mode */}
       {voiceCoaching &&
         (voiceCoaching.filler_words.count > 0 ||
           voiceCoaching.pacing ||
-          voiceCoaching.response_time) && (
-          <motion.div
+          voiceCoaching.response_time) &&
+        shouldShowVoiceDetails && (
+          <SafeMotion
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-3 rounded-xl border bg-card p-4"
@@ -243,10 +272,10 @@ export default function CoachingPanel({
                 </p>
               </div>
             )}
-          </motion.div>
+          </SafeMotion>
         )}
 
-      {resolvedHumeEmotions && (
+      {resolvedHumeEmotions && !isCondensed && (
         <DeepEmotionCard emotions={resolvedHumeEmotions} />
       )}
 
