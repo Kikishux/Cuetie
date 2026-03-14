@@ -17,6 +17,7 @@
 | Post-date debrief | Mar 13 | New /debrief page with guided prompts, AI analysis of real dates, specific scenario recommendations by title |
 | Sensory-aware UX modes | Mar 14 | 4 modes (Everyday, Soft Focus, Clear View, Quiet Session) with CSS token overrides, SensoryProvider context, SafeMotion wrapper, settings UI with fine-tune controls (motion, contrast, audio, coaching density), system preference detection (prefers-reduced-motion, prefers-contrast) |
 | Fix &apos; HTML entities | Mar 14 | Replaced all `&apos;` with apostrophes across 6 files (settings, landing, debrief, coach, premium prompt, onboarding) |
+| Ambiguity Decoder (S1) | Mar 14 | Upgraded Message Coach → Ambiguity Decoder: literal vs implied split, 2-4 interpretation cards with support levels (Strong/Some/Weak), evidence markers with dual meanings, goal-tabbed responses (Warm/Direct/Clarifying/Boundary), "Ask Directly" callout with copyable scripts, ambiguity level badge (Low/Medium/High), structured context inputs (interaction stage + user need). 27 unit tests |
 
 ---
 

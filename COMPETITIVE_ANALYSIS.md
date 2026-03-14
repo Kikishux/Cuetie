@@ -74,7 +74,7 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
    - Adaptive difficulty with "Recommended for You" based on weak skills
 
 8. **Real-world transfer tools**
-   - Real Message Coach (`/coach`) — paste actual dating app messages for coaching
+   - Real Message Coach upgraded to **Ambiguity Decoder** (`/coach`) — paste messages, get literal vs implied meanings, evidence-backed interpretations with uncertainty levels, goal-organized responses (warm/direct/clarifying/boundary), and "ask directly" scripts
    - Post-Date Debrief (`/debrief`) — analyze real dates with guided prompts
    - Conversation Review — revisit past sessions with inline coaching notes
 
@@ -97,7 +97,7 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 | ~~Score display bug (% vs /10)~~ | Consistently uses **/10 scale** across dashboard, progress, scorecard |
 | ~~No conversation review/replay~~ | Read-only `/practice/[sessionId]/review` with inline coaching notes |
 | ~~Single AI persona style~~ | **6 behavioral dimensions** (attachment, communication, flirtiness, emotional availability, conflict, texting style) on all 30 scenarios |
-| ~~No "real conversation" mode~~ | **Real Message Coach** at `/coach` — paste actual dating messages for subtext decoding + reply suggestions |
+| ~~No "real conversation" mode~~ | **Ambiguity Decoder** at `/coach` — literal vs implied analysis, evidence markers, interpretation cards with support levels, goal-tabbed responses, "ask directly" callout |
 | ~~No low-stimulation / sensory-safe UX mode~~ | **4 sensory modes** (Everyday, Soft Focus, Clear View, Quiet Session) with CSS token overrides, motion reduction, condensed coaching, system preference detection |
 
 ### Opportunities
@@ -163,9 +163,9 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 
 ## Competitive Positioning Statement
 
-> **Cuetie is the only AI-powered dating communication coach built specifically for autistic adults, combining real-time conversation practice, voice emotion analysis, real-message decoding, post-date debriefs, and measurable skill progression — all designed to support clear communication without forced masking.**
+> **Cuetie is the only AI-powered dating communication coach built specifically for autistic adults, combining real-time conversation practice, voice emotion analysis, ambiguity decoding with honest uncertainty, post-date debriefs, and measurable skill progression — all designed to support clear communication without forced masking.**
 
-vs. SpringSocial: "We're AI-powered, voice-enabled, and coach on real messages — not choose-your-response"
+vs. SpringSocial: "We're AI-powered, voice-enabled, and decode ambiguity with evidence — not choose-your-response"
 vs. Arrows: "We're dating-specific with emotion detection and real-world transfer tools, not general social skills"
 vs. Hiki/Haik: "We teach you the skills to succeed on any dating platform, with 30 personality-driven scenarios"
 vs. Noora: "We're focused on dating with adaptive difficulty and debrief tools — and we're a product, not a research project"
@@ -176,14 +176,14 @@ vs. Noora: "We're focused on dating with adaptive difficulty and debrief tools �
 
 ```
 Next:       1.5 (Stripe) → 2.4 (Accessibility) → 2.5 (PWA)     (enable revenue + reach)
-Then:       S1 (Ambiguity Decoder) → S2 (Consent Coach) → S5 (Rejection Recovery)  (research-backed high-impact)
+Then:       S2 (Consent Coach) → S5 (Rejection Recovery)  (research-backed high-impact)
 After:      S3 (Sensory Date Prep) → S4 (Transparent Scoring)   (deepen differentiation)
 Later:      3.1 (Therapist Dashboard) → 3.2 (Community) → S6–S14  (build moat + B2B)
 ```
 
 ## Key Insight
 
-Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking + real-message decoding + post-date debrief + sensory-aware UX. No competitor has all eight. With Tier 1 fixes complete, Tier 2–3 differentiators largely shipped, and sensory modes live, the next moat comes from **research-informed depth** (Ambiguity Decoder, Consent Coach, Sensory Date Planner) and **revenue enablement** (Stripe integration).
+Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking + ambiguity decoding + post-date debrief + sensory-aware UX. No competitor has all eight. With Tier 1 fixes complete, Tier 2–3 differentiators shipped, sensory modes live, and the Ambiguity Decoder launched, the next moat comes from **research-informed depth** (Consent Coach, Rejection Recovery, Sensory Date Planner) and **revenue enablement** (Stripe integration).
 
 ---
 
@@ -285,7 +285,7 @@ These cluster into **6 skill buckets**:
 | Gap | Status of Market | Cuetie Opportunity |
 |---|---|---|
 | **Adult dating-specific autism support** | Tools are strongest in education/school/general social skills, weakest in flirting, dating apps, first dates, consent | Core product — already positioned here |
-| **Real-message interpretation** | Few tools let you paste a real message and get subtext + safe responses + uncertainty warnings | Strengthen existing Message Coach into signature pillar |
+| **Real-message interpretation** | Few tools let you paste a real message and get subtext + safe responses + uncertainty warnings | ✅ **Ambiguity Decoder** — literal vs implied, evidence markers, support levels, goal-tabbed responses, ask-directly scripts |
 | **Sensory-aware dating support** | Complete white space — no tool treats sensory regulation as part of dating success | Build Sensory-Aware Date Planner |
 | **Consent & boundary coaching** | Practical tools for asking before touch, reading hesitation, wording direct consent are rare | New dedicated skill track |
 | **Masking-safe coaching** | Most tools optimize for "pass as typical" — missing "communicate clearly while staying yourself" | Position as core brand differentiator |
@@ -311,7 +311,7 @@ These cluster into **6 skill buckets**:
 | **Contrastive examples** | Show too blunt / balanced / too intense side-by-side | Add to coaching panel |
 | **Immediate feedback in context** | Right after the message, tied to exact wording | Dual-panel coaching already aligned |
 | **Gradual scaffolding** | Decode → craft → text exchange → live chat → voice → date planning | Build "Transfer Ladder" |
-| **Support uncertainty, not fake certainty** | "Likely friendly, possibly mild interest" > "She likes you" | Add confidence language to all coaching |
+| **Support uncertainty, not fake certainty** | "Likely friendly, possibly mild interest" > "She likes you" | ✅ Ambiguity Decoder uses Low/Medium/High levels + Strong/Some/Weak support per interpretation |
 | **Sensory/cognitive load accommodations** | Low-stimulation UI, predictable structure, chunked feedback, pause/replay | Build accessibility modes |
 | **Strength-based framing** | Clarity, compatibility, consent, self-advocacy — not deficit-fixing | Reframe all language |
 
@@ -323,7 +323,7 @@ These cluster into **6 skill buckets**:
 |---|---|---|
 | **Masking / "being fixed"** | Pressured to suppress autistic communication style | Explicitly state: "Directness is not wrong. You choose the style" |
 | **Neurotypical bias in scoring** | Penalizing bluntness, assuming small talk is necessary | Score clarity, reciprocity, boundary awareness — not "normality" |
-| **False certainty** | AI overstating attraction/rejection → embarrassment or unsafe escalation | Use confidence bands: likely / possible / weak evidence / ask directly |
+| **False certainty** | AI overstating attraction/rejection → embarrassment or unsafe escalation | ✅ Ambiguity Decoder uses honest confidence bands + "ask directly" when uncertain |
 | **Privacy concerns** | Real messages, voice samples, emotionally vulnerable content shared | Clear retention policy, easy deletion, private-by-default |
 | **Over-reliance on tool** | Users stop trusting themselves, need AI before every text | Design for scaffolding: "coach less over time," confidence mode |
 | **Shaming through scores** | "I failed being human" / "I'm bad at relationships" | Reframe as skill signals and growth markers, not worth or dateability |
@@ -337,7 +337,7 @@ These cluster into **6 skill buckets**:
 
 | # | Feature | Description | Impact | Feasibility |
 |---|---------|-------------|--------|-------------|
-| S1 | **Ambiguity Decoder v2** | Upgrade message coach: literal vs implied view, interest/confidence bands, suggested replies by goal, "ask directly" option, weak-evidence warnings | Very High | High |
+| S1 | **Ambiguity Decoder v2** | Upgrade message coach: literal vs implied view, interest/confidence bands, suggested replies by goal, "ask directly" option, weak-evidence warnings | Very High | ✅ Done |
 | S2 | **Consent & Boundary Coaching** | Dedicated skill track: asking for touch, reading hesitation, saying no, ending dates safely, direct consent scripts | Very High | Medium |
 | S3 | **Sensory-Aware Date Prep** | Venue filters/checklist, date energy budget, overwhelm scripts, break/exit planning, post-date recovery | High | Medium |
 | S4 | **Transparent Masking-Safe Scoring** | Show rubric dimensions, explain score changes, let users choose goals (clarity/warmth/directness), separate social norms from safety | High | Medium |
@@ -360,7 +360,7 @@ These cluster into **6 skill buckets**:
 | S11 | **Values-Based Personalization** | Settings: direct vs polished, sensory support level, flirting comfort, explicit consent preference, autistic-affirming vs NT-norm translation | Medium-High | Medium |
 | S12 | **Compatible-Partner Signal Library** | Teach users to spot partners comfortable with direct communication, explicit plans, sensory needs, consent | Medium | Medium |
 | S13 | **"Authentic, Not Performative" Mode** | Toggle: "Help me be clearer without masking" / "Help me understand NT norms" / "Help me find compatible people" | Medium-High | Medium |
-| S14 | **Uncertainty Meter + "Ask Directly" Prompts** | When ambiguity is high, recommend direct clarification instead of more inference — supports autistic strengths | Medium | High |
+| S14 | **Uncertainty Meter + "Ask Directly" Prompts** | When ambiguity is high, recommend direct clarification instead of more inference — supports autistic strengths | Medium | ✅ Done (built into Ambiguity Decoder) |
 
 ---
 
