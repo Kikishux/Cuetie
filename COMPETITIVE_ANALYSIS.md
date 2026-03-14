@@ -52,6 +52,7 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 
 3. **Voice mode with prosody analysis**
    - STT → practice → TTS → emotion feedback loop
+   - Filler words, pacing (WPM), and response time metrics displayed in coaching panel
    - Only Arrows has anything similar (visual avatars), but without prosody
 
 4. **Concrete, specific feedback (not vague advice)**
@@ -67,20 +68,37 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
    - Temp files deleted after transcription
    - No persistent audio storage
 
-### Weaknesses (Critical Gaps)
+7. **30 scenarios with personality system**
+   - 8 categories with search + filter chips
+   - 6 behavioral dimensions per scenario (attachment, communication, flirtiness, emotional availability, conflict, texting style)
+   - Adaptive difficulty with "Recommended for You" based on weak skills
+
+8. **Real-world transfer tools**
+   - Real Message Coach (`/coach`) — paste actual dating app messages for coaching
+   - Post-Date Debrief (`/debrief`) — analyze real dates with guided prompts
+   - Conversation Review — revisit past sessions with inline coaching notes
+
+### Weaknesses (Remaining Gaps)
 
 1. **No mobile app** — web-only responsive design; competitors like Hiki/Haik are mobile-first
-2. **Tiny scenario library** — only 10 scenarios vs SpringSocial's 1,000+
-3. **No community/social features** — completely solo practice; no peer connection
-4. **Account deletion not implemented** — privacy risk for a vulnerable user base
-5. **No payment/billing** — premium tier exists but can't be purchased
-6. **Google OAuth disabled** — friction for sign-up
-7. **Voice coaching metrics computed but not displayed** — filler words, pacing, response time are wasted
-8. **Score display bug** — 0-10 scale shown as percentages in some views
-9. **No conversation review/replay** — can't revisit past conversations to study patterns
-10. **No accessibility beyond basics** — missing aria-live for chat, reduced-motion, screen reader support
-11. **Single AI persona style** — all scenarios feel similar; no personality variation
-12. **No "real conversation" mode** — only simulated dates, no guidance for actual dating app messages
+2. **No community/social features** — completely solo practice; no peer connection
+3. **No payment/billing** — premium tier exists but can't be purchased (no Stripe integration)
+4. **No accessibility beyond basics** — missing aria-live for chat, reduced-motion, screen reader support
+5. **No low-stimulation / sensory-safe UX mode** — critical for target audience
+6. **No therapist/coach dashboard** — B2B channel not yet buildable
+
+### ✅ Previously Identified Weaknesses — Now Fixed
+
+| Issue | Resolution |
+|-------|------------|
+| ~~Tiny scenario library (10)~~ | Expanded to **30 scenarios** across 8 categories with filter chips + search |
+| ~~Account deletion not implemented~~ | Server-side admin API deletes auth user + cascades all data |
+| ~~Google OAuth disabled~~ | Button restored with graceful error handling (Supabase provider config still needed) |
+| ~~Voice metrics not displayed~~ | Filler words, pacing (WPM), response time now shown in coaching panel |
+| ~~Score display bug (% vs /10)~~ | Consistently uses **/10 scale** across dashboard, progress, scorecard |
+| ~~No conversation review/replay~~ | Read-only `/practice/[sessionId]/review` with inline coaching notes |
+| ~~Single AI persona style~~ | **6 behavioral dimensions** (attachment, communication, flirtiness, emotional availability, conflict, texting style) on all 30 scenarios |
+| ~~No "real conversation" mode~~ | **Real Message Coach** at `/coach` — paste actual dating messages for subtext decoding + reply suggestions |
 
 ### Opportunities
 
@@ -145,29 +163,27 @@ Cuetie operates at the intersection of **AI social skills coaching** and **neuro
 
 ## Competitive Positioning Statement
 
-> **Cuetie is the only AI-powered dating communication coach built specifically for autistic adults, combining real-time conversation practice with voice emotion analysis and measurable skill progression.**
+> **Cuetie is the only AI-powered dating communication coach built specifically for autistic adults, combining real-time conversation practice, voice emotion analysis, real-message decoding, post-date debriefs, and measurable skill progression — all designed to support clear communication without forced masking.**
 
-vs. SpringSocial: "We're AI-powered and voice-enabled, not choose-your-response"
-vs. Arrows: "We're dating-specific with emotion detection, not general social skills"
-vs. Hiki/Haik: "We teach you the skills to succeed on any dating platform"
-vs. Noora: "We're focused on dating, not general empathy — and we're a product, not a research project"
+vs. SpringSocial: "We're AI-powered, voice-enabled, and coach on real messages — not choose-your-response"
+vs. Arrows: "We're dating-specific with emotion detection and real-world transfer tools, not general social skills"
+vs. Hiki/Haik: "We teach you the skills to succeed on any dating platform, with 30 personality-driven scenarios"
+vs. Noora: "We're focused on dating with adaptive difficulty and debrief tools — and we're a product, not a research project"
 
 ---
 
 ## Recommended Priority Order
 
 ```
-Sprint 1-2:  1.1 → 1.2 → 1.3 → 1.4 → 1.5  (fix credibility + enable revenue)
-Sprint 3-4:  2.1 → 2.3 → 2.4              (differentiate + retain users)
-Sprint 5-6:  2.2 → 2.5 → 3.3 → 3.4        (deepen engagement + mobile)
-Sprint 7+:   3.1 → 3.2 → 3.5 → 3.6        (build moat + B2B)
+Next:       1.5 (Stripe) → 2.4 (Accessibility) → 2.5 (PWA)     (enable revenue + reach)
+Then:       S1 (Ambiguity Decoder) → S2 (Consent Coach) → S5 (Rejection Recovery)  (research-backed high-impact)
+After:      S3 (Sensory Date Prep) → S4 (Transparent Scoring) → 3.6 (Low-stim UX)  (deepen differentiation)
+Later:      3.1 (Therapist Dashboard) → 3.2 (Community) → S6–S14  (build moat + B2B)
 ```
 
 ## Key Insight
 
-Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking. No competitor has all five. The risk is that each piece is reproducible individually; the moat comes from **depth of integration** and **trust with the autistic community**.
-
-The most impactful near-term move is **Tier 2.3 (Real Message Coach)** — letting users paste actual dating app messages for coaching. This bridges practice → real life, which no competitor does, and creates daily-use engagement beyond practice sessions.
+Cuetie's biggest competitive advantage isn't any single feature — it's the **combination**: autism-specific + dating-focused + voice emotion analysis + real-time coaching + skill tracking + real-message decoding + post-date debrief. No competitor has all seven. With Tier 1 fixes complete and Tier 2–3 differentiators largely shipped, the next moat comes from **research-informed depth** (Ambiguity Decoder, Consent Coach, Sensory Planner) and **revenue enablement** (Stripe integration).
 
 ---
 
