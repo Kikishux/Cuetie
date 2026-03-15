@@ -15,11 +15,16 @@ import { getOpenAIClient, SCORECARD_CONFIG } from "@/lib/ai/config";
 function buildScorecardPrompt(
   messages: Message[],
   scenario: Scenario,
-  userProfile: OnboardingProfile
+  userProfile: OnboardingProfile,
+  availableScenarios?: Scenario[],
 ): ChatCompletionMessageParam[] {
   const transcript = messages
     .map((m) => `[${m.role.toUpperCase()}] ${m.content}`)
     .join("\n\n");
+
+  const scenarioList = availableScenarios?.length
+    ? `\n=== AVAILABLE PRACTICE SCENARIOS ===\n${availableScenarios.map(s => `- "${s.title}" (${s.category}, ${s.difficulty}) — focus: ${s.coaching_focus.join(", ")}`).join("\n")}\n`
+    : "";
 
   const systemPrompt = [
     "You are Cuetie's session evaluator. You are a CRITICAL, OBJECTIVE evaluator —",
@@ -73,7 +78,13 @@ function buildScorecardPrompt(
     "  },",
     '  "highlights": ["string — things the user genuinely did well (be specific, cite messages)"],',
     '  "growth_areas": ["string — specific areas to improve with actionable, concrete advice"],',
-    '  "suggested_scenarios": ["string — scenario titles or types to try next"],',
+    '  "suggested_scenarios": [',
+    '    {',
+    '      "title": "string — scenario title",',
+    '      "skill_focus": ["string — skill IDs this scenario targets"],',
+    '      "matched_scenario_id": "string | null — UUID of matching scenario from the available list, or null if no match"',
+    '    }',
+    '  ],',
     '  "session_duration_minutes": number,',
     '  "message_count": number',
     "}",
@@ -82,6 +93,15 @@ function buildScorecardPrompt(
     "tone_matching, conversation_pacing, self_disclosure, active_listening.",
     "Only include skills that were exercised in this conversation.",
     "The examples field is REQUIRED — you MUST cite specific user messages as evidence for each score.",
+    "",
+    "=== SUGGESTED SCENARIOS RULES ===",
+    "Suggest 2-3 scenarios the user should practice next based on their weak areas.",
+    availableScenarios?.length
+      ? "FIRST try to match to an existing scenario from the AVAILABLE PRACTICE SCENARIOS list below. If a match exists, use the EXACT title and set matched_scenario_id."
+      : "",
+    "If no good match exists, invent a focused skill title (e.g., 'Asking Follow-Up Questions About Hobbies') and set matched_scenario_id to null.",
+    "Each suggestion MUST include the skill_focus array of which skills it targets.",
+    scenarioList,
   ]
     .filter(Boolean)
     .join("\n");
@@ -126,9 +146,10 @@ function parseScorecardResponse(raw: string, messageCount: number): Scorecard {
 export async function generateScorecard(
   messages: Message[],
   scenario: Scenario,
-  userProfile: OnboardingProfile
+  userProfile: OnboardingProfile,
+  availableScenarios?: Scenario[],
 ): Promise<Scorecard> {
-  const prompt = buildScorecardPrompt(messages, scenario, userProfile);
+  const prompt = buildScorecardPrompt(messages, scenario, userProfile, availableScenarios);
 
   const completion = await getOpenAIClient().chat.completions.create({
     model: SCORECARD_CONFIG.model,

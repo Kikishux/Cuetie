@@ -9,6 +9,18 @@ const startSessionSchema = z.object({
   scenarioId: z.string().min(1),
   mode: z.enum(["text", "voice"]).default("text"),
   roundType: z.enum(["quick", "standard", "deep"]).default("standard"),
+  isFinetune: z.boolean().optional(),
+  sourceSessionId: z.string().optional(),
+  generatedScenario: z.object({
+    title: z.string(),
+    description: z.string(),
+    difficulty: z.string(),
+    category: z.string(),
+    partner_persona: z.record(z.string(), z.unknown()),
+    coaching_focus: z.array(z.string()),
+    opening_message: z.string(),
+    success_target: z.string().optional(),
+  }).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -23,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { scenarioId, mode, roundType } = parsed.data;
+    const { scenarioId, mode, roundType, isFinetune, sourceSessionId, generatedScenario } = parsed.data;
 
     // --- Authenticate ---
     const supabase = await createClient();
@@ -35,30 +47,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Fetch scenario ---
-    const { data: scenario, error: scenarioError } = await supabase
-      .from("scenarios")
-      .select("*")
-      .eq("id", scenarioId)
-      .single<Scenario>();
+    // --- Fetch or create scenario ---
+    let scenario: Scenario | null = null;
 
-    if (scenarioError || !scenario) {
+    if (generatedScenario) {
+      // Insert the generated scenario into the DB
+      const { data: newScenario } = await supabase
+        .from("scenarios")
+        .insert({
+          title: generatedScenario.title,
+          description: generatedScenario.description,
+          difficulty: generatedScenario.difficulty,
+          category: generatedScenario.category,
+          partner_persona: generatedScenario.partner_persona,
+          coaching_focus: generatedScenario.coaching_focus,
+          opening_message: generatedScenario.opening_message,
+          is_active: false, // Don't show in browse list
+          sort_order: 999,
+        })
+        .select("*")
+        .single<Scenario>();
+
+      scenario = newScenario;
+    } else {
+      const { data: fetchedScenario } = await supabase
+        .from("scenarios")
+        .select("*")
+        .eq("id", scenarioId)
+        .single<Scenario>();
+      scenario = fetchedScenario;
+    }
+
+    if (!scenario) {
       return NextResponse.json<ErrorResponse>(
         { error: { code: "NOT_FOUND", message: "Scenario not found" } },
         { status: 404 }
       );
     }
 
-    // --- Create session (gracefully handle missing round_type column) ---
+    const actualScenarioId = scenario.id;
+
+    // --- Create session (gracefully handle missing columns) ---
     let session: Session | null = null;
     let sessionError: Error | null = null;
 
-    const sessionInsert = {
+    const sessionInsert: Record<string, unknown> = {
       user_id: user.id,
-      scenario_id: scenarioId,
+      scenario_id: actualScenarioId,
       mode: mode as "text" | "voice",
       round_type: roundType,
       status: "active" as const,
+      ...(isFinetune ? { is_finetune: true } : {}),
+      ...(sourceSessionId ? { source_session_id: sourceSessionId } : {}),
     };
 
     const result = await supabase
@@ -68,12 +108,12 @@ export async function POST(request: NextRequest) {
       .single<Session>();
 
     if (result.error) {
-      // If round_type column doesn't exist, retry without it
+      // If new columns don't exist, retry without them
       const fallback = await supabase
         .from("sessions")
         .insert({
           user_id: user.id,
-          scenario_id: scenarioId,
+          scenario_id: actualScenarioId,
           mode: mode as "text" | "voice",
           status: "active" as const,
         })

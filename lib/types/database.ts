@@ -175,6 +175,8 @@ export interface Session {
   summary: string | null;
   message_count: number;
   total_tokens: number;
+  is_finetune?: boolean;
+  source_session_id?: string | null;
 }
 
 export interface Message {
@@ -247,9 +249,31 @@ export interface Scorecard {
   >;
   highlights: string[];
   growth_areas: string[];
-  suggested_scenarios: string[];
+  suggested_scenarios: (string | FineTuneRecommendation)[];
   session_duration_minutes: number;
   message_count: number;
+}
+
+// ============================================================
+// Fine-Tune Skills Types
+// ============================================================
+
+export interface FineTuneRecommendation {
+  title: string;
+  skill_focus: SkillId[];
+  matched_scenario_id?: string;
+  is_finetune: boolean;
+}
+
+export interface GeneratedScenario {
+  title: string;
+  description: string;
+  difficulty: DifficultyLevel;
+  category: ScenarioCategory;
+  partner_persona: PartnerPersona;
+  coaching_focus: string[];
+  opening_message: string;
+  success_target: string;
 }
 
 // ============================================================

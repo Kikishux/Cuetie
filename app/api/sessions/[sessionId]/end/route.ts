@@ -82,8 +82,16 @@ export async function POST(
 
     const userProfile: OnboardingProfile = userRecord?.onboarding_profile ?? {};
 
+    // --- Fetch all active scenarios for Practice Next matching ---
+    const { data: allScenarios } = await supabase
+      .from("scenarios")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .returns<Scenario[]>();
+
     // --- Generate scorecard ---
-    const scorecard = await generateScorecard(messages, scenario, userProfile);
+    const scorecard = await generateScorecard(messages, scenario, userProfile, allScenarios ?? []);
     const skillScores = calculateSkillScores(scorecard);
 
     // --- Save skill scores ---

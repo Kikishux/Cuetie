@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -21,12 +22,13 @@ import {
   ArrowDownRight,
   Minus,
   Sparkles,
+  Zap,
   RotateCcw,
   LayoutDashboard,
   TrendingUp,
   MessageSquare,
 } from "lucide-react";
-import type { Scorecard, Scenario } from "@/lib/types/database";
+import type { Scorecard, Scenario, FineTuneRecommendation } from "@/lib/types/database";
 
 interface SessionScorecardProps {
   scorecard: Scorecard;
@@ -70,72 +72,6 @@ const trendIcons = {
   new: <Sparkles className="h-3.5 w-3.5 text-blue-500" />,
 };
 
-const TITLE_STOP_WORDS = new Set([
-  "a",
-  "an",
-  "the",
-  "and",
-  "for",
-  "of",
-  "to",
-  "your",
-  "with",
-  "next",
-  "practice",
-]);
-
-function normalizeTitle(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function tokenizeTitle(value: string) {
-  return normalizeTitle(value)
-    .split(" ")
-    .filter(Boolean)
-    .filter((token) => !TITLE_STOP_WORDS.has(token));
-}
-
-function getScenarioMatchScore(suggestion: string, title: string) {
-  const normalizedSuggestion = normalizeTitle(suggestion);
-  const normalizedTitle = normalizeTitle(title);
-
-  if (!normalizedSuggestion || !normalizedTitle) {
-    return 0;
-  }
-
-  if (normalizedSuggestion === normalizedTitle) {
-    return 1;
-  }
-
-  if (
-    normalizedTitle.includes(normalizedSuggestion) ||
-    normalizedSuggestion.includes(normalizedTitle)
-  ) {
-    return 0.95;
-  }
-
-  const suggestionTokens = tokenizeTitle(suggestion);
-  const titleTokens = tokenizeTitle(title);
-  if (suggestionTokens.length === 0 || titleTokens.length === 0) {
-    return 0;
-  }
-
-  const titleTokenSet = new Set(titleTokens);
-  const sharedTokens = suggestionTokens.filter((token) => titleTokenSet.has(token));
-  if (sharedTokens.length === 0) {
-    return 0;
-  }
-
-  const overlapRatio =
-    sharedTokens.length / Math.min(suggestionTokens.length, titleTokens.length);
-
-  return sharedTokens.length >= 2 ? overlapRatio : 0;
-}
-
 export default function SessionScorecard({
   scorecard,
   onNewSession,
@@ -147,7 +83,7 @@ export default function SessionScorecard({
     scorecard.suggested_scenarios.length > 0
   );
   const skillEntries = Object.entries(scorecard.skills);
-  const suggestionsKey = scorecard.suggested_scenarios.join("||");
+  const suggestionsKey = JSON.stringify(scorecard.suggested_scenarios);
 
   useEffect(() => {
     if (scorecard.suggested_scenarios.length === 0) {
@@ -187,31 +123,6 @@ export default function SessionScorecard({
       isMounted = false;
     };
   }, [suggestionsKey, scorecard.suggested_scenarios.length]);
-
-  const matchedScenarios = useMemo(() => {
-    if (scorecard.suggested_scenarios.length === 0 || scenarios.length === 0) {
-      return [] as { suggestion: string; scenario: Scenario }[];
-    }
-
-    const usedScenarioIds = new Set<string>();
-
-    return scorecard.suggested_scenarios.flatMap((suggestion) => {
-      const bestMatch = scenarios
-        .filter((scenario) => !usedScenarioIds.has(scenario.id))
-        .map((scenario) => ({
-          scenario,
-          score: getScenarioMatchScore(suggestion, scenario.title),
-        }))
-        .sort((a, b) => b.score - a.score)[0];
-
-      if (!bestMatch || bestMatch.score < 0.6) {
-        return [];
-      }
-
-      usedScenarioIds.add(bestMatch.scenario.id);
-      return [{ suggestion, scenario: bestMatch.scenario }];
-    });
-  }, [scenarios, scorecard.suggested_scenarios]);
 
   return (
     <motion.div
@@ -340,42 +251,109 @@ export default function SessionScorecard({
               <p className="text-sm text-muted-foreground">
                 Finding matching scenarios...
               </p>
-            ) : matchedScenarios.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {matchedScenarios.map(({ suggestion, scenario }, i) => (
-                  <motion.div
-                    key={`${scenario.id}-${suggestion}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 + i * 0.08 }}
-                  >
-                    <Link
-                      href="/practice"
-                      className="group block rounded-xl border bg-muted/20 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+            ) : (
+              <div className="space-y-2">
+                {scorecard.suggested_scenarios.map((item, i) => {
+                  const isStructured = typeof item === "object" && item !== null && "title" in item;
+                  const rec = isStructured ? (item as FineTuneRecommendation) : null;
+                  const title = rec ? rec.title : String(item);
+                  const matchedId = rec?.matched_scenario_id;
+                  const skillFocus = rec?.skill_focus ?? [];
+
+                  // Try matching to a loaded scenario
+                  const matched = matchedId
+                    ? scenarios.find(s => s.id === matchedId)
+                    : scenarios.find(s => s.title.toLowerCase() === title.toLowerCase());
+
+                  if (matched) {
+                    // Matched to existing scenario → direct link
+                    return (
+                      <motion.div
+                        key={`match-${i}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 + i * 0.08 }}
+                      >
+                        <Link
+                          href="/practice"
+                          className="group flex items-start justify-between gap-3 rounded-xl border bg-muted/20 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                        >
+                          <div>
+                            <p className="text-sm font-semibold leading-6">
+                              {matched.title}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {matched.difficulty} · {matched.category.replace(/_/g, " ")}
+                            </p>
+                          </div>
+                          <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        </Link>
+                      </motion.div>
+                    );
+                  }
+
+                  // No match → Fine-Tune Skills button
+                  return (
+                    <motion.div
+                      key={`ft-${i}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 + i * 0.08 }}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("/api/scenarios/generate", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                title,
+                                skill_focus: skillFocus.length > 0 ? skillFocus : ["question_quality"],
+                                difficulty: "beginner",
+                              }),
+                            });
+                            if (!res.ok) throw new Error("Failed to generate");
+                            const scenario = await res.json();
+
+                            // Start a Fine-Tune session with the generated scenario
+                            const startRes = await fetch("/api/sessions/start", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                scenarioId: scenario.id ?? "generated",
+                                mode: "text",
+                                roundType: "quick",
+                                generatedScenario: scenario,
+                                isFinetune: true,
+                              }),
+                            });
+                            if (!startRes.ok) throw new Error("Failed to start");
+                            const data = await startRes.json();
+                            window.location.href = `/practice/${data.session.id}?round=quick`;
+                          } catch {
+                            // Fallback: go to practice page
+                            window.location.href = "/practice";
+                          }
+                        }}
+                        className="group flex w-full items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/[0.03] p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+                      >
                         <div>
-                          <p className="text-sm font-semibold leading-6">
-                            {scenario.title}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <Zap className="h-3.5 w-3.5 text-primary" />
+                            <p className="text-sm font-semibold leading-6">{title}</p>
+                          </div>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Open Practice to start this scenario.
+                            Fine-Tune Skills · Quick · 5 min
+                            {skillFocus.length > 0 && ` · ${skillFocus.join(", ")}`}
                           </p>
                         </div>
-                        <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+                        <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      </button>
+                    </motion.div>
+                  );
+                })}
               </div>
-            ) : (
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {scorecard.suggested_scenarios.map((scenario) => (
-                  <li key={scenario} className="leading-6">
-                    {scenario}
-                  </li>
-                ))}
-              </ul>
             )}
           </CardContent>
         </Card>
