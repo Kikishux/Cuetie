@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -27,6 +26,7 @@ import {
   LayoutDashboard,
   TrendingUp,
   MessageSquare,
+  Loader2,
 } from "lucide-react";
 import type { Scorecard, Scenario, FineTuneRecommendation } from "@/lib/types/database";
 
@@ -82,8 +82,65 @@ export default function SessionScorecard({
   const [loadingSuggestions, setLoadingSuggestions] = useState(
     scorecard.suggested_scenarios.length > 0
   );
+  const [startingIdx, setStartingIdx] = useState<number | null>(null);
   const skillEntries = Object.entries(scorecard.skills);
   const suggestionsKey = JSON.stringify(scorecard.suggested_scenarios);
+
+  // Start a session — either with a matched scenario or a generated Fine-Tune one
+  const startSession = useCallback(async (
+    idx: number,
+    opts: { scenarioId?: string; title: string; skillFocus: string[] }
+  ) => {
+    if (startingIdx !== null) return;
+    setStartingIdx(idx);
+    try {
+      if (opts.scenarioId) {
+        // Matched scenario → start session directly
+        const res = await fetch("/api/sessions/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scenarioId: opts.scenarioId,
+            mode: "text",
+            roundType: "quick",
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to start session");
+        const data = await res.json();
+        window.location.href = `/practice/${data.session.id}?round=quick`;
+      } else {
+        // No match → generate dynamic micro-scenario via AI
+        const genRes = await fetch("/api/scenarios/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: opts.title,
+            skill_focus: opts.skillFocus.length > 0 ? opts.skillFocus : ["question_quality"],
+            difficulty: "beginner",
+          }),
+        });
+        if (!genRes.ok) throw new Error("Failed to generate scenario");
+        const scenario = await genRes.json();
+
+        const startRes = await fetch("/api/sessions/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scenarioId: scenario.id ?? "generated",
+            mode: "text",
+            roundType: "quick",
+            generatedScenario: scenario,
+            isFinetune: true,
+          }),
+        });
+        if (!startRes.ok) throw new Error("Failed to start Fine-Tune session");
+        const data = await startRes.json();
+        window.location.href = `/practice/${data.session.id}?round=quick`;
+      }
+    } catch {
+      setStartingIdx(null);
+    }
+  }, [startingIdx]);
 
   useEffect(() => {
     if (scorecard.suggested_scenarios.length === 0) {
@@ -260,13 +317,16 @@ export default function SessionScorecard({
                   const matchedId = rec?.matched_scenario_id;
                   const skillFocus = rec?.skill_focus ?? [];
 
-                  // Try matching to a loaded scenario
+                  // Only match by explicit matched_scenario_id — no fuzzy title matching
                   const matched = matchedId
                     ? scenarios.find(s => s.id === matchedId)
-                    : scenarios.find(s => s.title.toLowerCase() === title.toLowerCase());
+                    : null;
+
+                  const isLoading = startingIdx === i;
+                  const isDisabled = startingIdx !== null;
 
                   if (matched) {
-                    // Matched to existing scenario → direct link
+                    // Matched to existing scenario → button that starts a session directly
                     return (
                       <motion.div
                         key={`match-${i}`}
@@ -274,9 +334,11 @@ export default function SessionScorecard({
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.7 + i * 0.08 }}
                       >
-                        <Link
-                          href="/practice"
-                          className="group flex items-start justify-between gap-3 rounded-xl border bg-muted/20 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                        <button
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => startSession(i, { scenarioId: matched.id, title: matched.title, skillFocus })}
+                          className="group flex w-full items-start justify-between gap-3 rounded-xl border bg-muted/20 p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           <div>
                             <p className="text-sm font-semibold leading-6">
@@ -286,13 +348,17 @@ export default function SessionScorecard({
                               {matched.difficulty} · {matched.category.replace(/_/g, " ")}
                             </p>
                           </div>
-                          <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                        </Link>
+                          {isLoading ? (
+                            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+                          ) : (
+                            <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                          )}
+                        </button>
                       </motion.div>
                     );
                   }
 
-                  // No match → Fine-Tune Skills button
+                  // No match → Fine-Tune Skills: generate dynamic micro-scenario
                   return (
                     <motion.div
                       key={`ft-${i}`}
@@ -302,41 +368,9 @@ export default function SessionScorecard({
                     >
                       <button
                         type="button"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch("/api/scenarios/generate", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                title,
-                                skill_focus: skillFocus.length > 0 ? skillFocus : ["question_quality"],
-                                difficulty: "beginner",
-                              }),
-                            });
-                            if (!res.ok) throw new Error("Failed to generate");
-                            const scenario = await res.json();
-
-                            // Start a Fine-Tune session with the generated scenario
-                            const startRes = await fetch("/api/sessions/start", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                scenarioId: scenario.id ?? "generated",
-                                mode: "text",
-                                roundType: "quick",
-                                generatedScenario: scenario,
-                                isFinetune: true,
-                              }),
-                            });
-                            if (!startRes.ok) throw new Error("Failed to start");
-                            const data = await startRes.json();
-                            window.location.href = `/practice/${data.session.id}?round=quick`;
-                          } catch {
-                            // Fallback: go to practice page
-                            window.location.href = "/practice";
-                          }
-                        }}
-                        className="group flex w-full items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/[0.03] p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+                        disabled={isDisabled}
+                        onClick={() => startSession(i, { title, skillFocus })}
+                        className="group flex w-full items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/[0.03] p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -344,11 +378,16 @@ export default function SessionScorecard({
                             <p className="text-sm font-semibold leading-6">{title}</p>
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Fine-Tune Skills · Quick · 5 min
-                            {skillFocus.length > 0 && ` · ${skillFocus.join(", ")}`}
+                            {isLoading
+                              ? "Generating scenario..."
+                              : `Fine-Tune Skills · Quick · 5 min${skillFocus.length > 0 ? ` · ${skillFocus.join(", ")}` : ""}`}
                           </p>
                         </div>
-                        <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        {isLoading ? (
+                          <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+                        ) : (
+                          <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        )}
                       </button>
                     </motion.div>
                   );
