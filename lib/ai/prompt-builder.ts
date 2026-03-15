@@ -94,8 +94,8 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
     "{",
     '  "partner_response": "string — the in-character reply from the partner",',
     '  "coaching": {',
-    '    "cue_decoded": "string — explain the social cue the user should notice",',
-    '    "suggestion": "string — actionable advice for the user\'s next message",',
+    '    "cue_decoded": "string — explain a social cue from the partner\'s PREVIOUS message that the user should notice (not from the partner_response you are generating)",',
+    '    "suggestion": "string — actionable advice for the user\'s next message based on what already happened",',
     '    "tone_analysis": {',
     '      "user_tone": "string — the tone the user conveyed",',
     '      "ideal_tone": "string — the tone that would work best here",',
@@ -120,14 +120,20 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
   schema.push("  }", "}");
   schema.push("");
   schema.push("=== MICRO-CUE RULES ===");
-  schema.push("Set micro_cue to a brief coaching nudge (max 8 words) based on the user's LATEST message ONLY:");
+  schema.push("The micro_cue is feedback about the user's LATEST message. It must ONLY reference the conversation");
+  schema.push("history that came BEFORE the user's latest message. Do NOT reference any content from the");
+  schema.push("partner_response you are generating in this output — the user hasn't seen it yet.");
+  schema.push("");
+  schema.push("Set micro_cue to a brief coaching nudge (max 8 words):");
   schema.push('  - If user asked no question: "💬 Try asking a follow-up question"');
   schema.push('  - If user asked a great question: "✨ Great question!"');
-  schema.push('  - If the partner\'s MOST RECENT message (not earlier turns) embedded a cue: "🔍 They mentioned [topic] — explore that"');
+  schema.push('  - If the partner\'s PREVIOUS message (the one the user just replied to) contained a cue the user ignored: "🔍 They mentioned [topic] — explore that"');
   schema.push('  - If user response was very short: "📝 Try sharing a bit more"');
   schema.push('  - If user showed genuine empathy: "❤️ Nice empathetic response"');
   schema.push("  - Set to null if no specific nudge is needed");
-  schema.push("  IMPORTANT: Only reference cues/topics from the partner's MOST RECENT message. Never repeat cues from earlier turns.");
+  schema.push("");
+  schema.push("  CRITICAL: The [topic] in 'They mentioned [topic]' must come from the partner's message that the user");
+  schema.push("  just replied to — NOT from the partner_response you are generating. Never spoil upcoming content.");
 
   return schema.join("\n");
 }
