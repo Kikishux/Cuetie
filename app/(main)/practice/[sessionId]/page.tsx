@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -20,13 +20,21 @@ import { useAudioPlayer } from "@/lib/hooks/useAudioPlayer";
 import ConversationPanel from "@/components/chat/ConversationPanel";
 import CoachingPanel from "@/components/chat/CoachingPanel";
 import { HUME_FREE_PREVIEW_LIMIT } from "@/lib/subscription";
-import type { Scenario, Session } from "@/lib/types/database";
+import type { Scenario, Session, RoundType } from "@/lib/types/database";
 import { getSessionLimits, getElapsedSeconds } from "@/lib/types/database";
+
+const VALID_ROUNDS = new Set<string>(["quick", "standard", "deep"]);
 
 export default function SessionPage() {
   const params = useParams<{ sessionId: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = params.sessionId;
+
+  // Read round type from URL query param (set during session start), fall back to session DB value
+  const roundFromUrl = searchParams.get("round");
+  const resolvedRound: RoundType =
+    roundFromUrl && VALID_ROUNDS.has(roundFromUrl) ? (roundFromUrl as RoundType) : "standard";
 
   const [session, setSession] = useState<Session | null>(null);
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -110,7 +118,7 @@ export default function SessionPage() {
   // Timer: update time remaining every second
   useEffect(() => {
     if (!session || session.status !== "active") return;
-    const limits = getSessionLimits(session.round_type ?? "standard", session.mode);
+    const limits = getSessionLimits(resolvedRound, session.mode);
 
     const interval = setInterval(() => {
       const elapsed = getElapsedSeconds(session.started_at);
@@ -196,6 +204,8 @@ export default function SessionPage() {
             <p className="text-xs text-muted-foreground">
               {voiceEnabled ? "Speaking" : "Chatting"} with{" "}
               <span className="font-medium text-foreground">{partnerName}</span>
+              {" · "}
+              <span className="capitalize">{resolvedRound} round</span>
             </p>
           </div>
         </div>

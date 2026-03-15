@@ -200,7 +200,7 @@ export default function PracticePage() {
       const data = await res.json();
       setRoundSelectorOpen(false);
       setStarting(null);
-      router.push(`/practice/${data.session.id}`);
+      router.push(`/practice/${data.session.id}?round=${roundType}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start");
       setStarting(null);
