@@ -15,6 +15,46 @@ export type ScenarioCategory =
 export type SessionMode = "text" | "voice";
 export type SessionStatus = "active" | "completed" | "abandoned";
 export type MessageRole = "user" | "partner" | "system";
+export type RoundType = "quick" | "standard" | "deep";
+
+// ============================================================
+// Session Round Limits
+// ============================================================
+
+export interface SessionLimits {
+  max_user_turns: number;
+  max_duration_seconds: number;
+  max_tokens: number;
+  warn_at_turns_remaining: number;
+}
+
+const TEXT_ROUNDS: Record<RoundType, SessionLimits> = {
+  quick:    { max_user_turns: 5,  max_duration_seconds: 5 * 60,  max_tokens: 20000,  warn_at_turns_remaining: 2 },
+  standard: { max_user_turns: 12, max_duration_seconds: 15 * 60, max_tokens: 50000,  warn_at_turns_remaining: 2 },
+  deep:     { max_user_turns: 16, max_duration_seconds: 20 * 60, max_tokens: 70000,  warn_at_turns_remaining: 2 },
+};
+
+const VOICE_ROUNDS: Record<RoundType, SessionLimits> = {
+  quick:    { max_user_turns: 4,  max_duration_seconds: 5 * 60,  max_tokens: 18000,  warn_at_turns_remaining: 1 },
+  standard: { max_user_turns: 8,  max_duration_seconds: 10 * 60, max_tokens: 40000,  warn_at_turns_remaining: 2 },
+  deep:     { max_user_turns: 12, max_duration_seconds: 15 * 60, max_tokens: 55000,  warn_at_turns_remaining: 2 },
+};
+
+export function getSessionLimits(roundType: RoundType, mode: SessionMode): SessionLimits {
+  return mode === "voice" ? VOICE_ROUNDS[roundType] : TEXT_ROUNDS[roundType];
+}
+
+export function getUserTurnCount(messageCount: number): number {
+  // message_count includes the opening partner message (1) + 2 per user turn (user + partner)
+  return Math.max(0, Math.floor((messageCount - 1) / 2));
+}
+
+export function getElapsedSeconds(startedAt: string): number {
+  return Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+}
+
+/** Inactivity timeout for auto-abandon (30 minutes) */
+export const SESSION_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 export type SkillId =
   | "empathy"
@@ -127,6 +167,7 @@ export interface Session {
   user_id: string;
   scenario_id: string;
   mode: SessionMode;
+  round_type: RoundType;
   status: SessionStatus;
   started_at: string;
   ended_at: string | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   MessageCircle,
   BrainCircuit,
   X,
+  Clock,
 } from "lucide-react";
 import { useChat } from "@/lib/hooks/useChat";
 import { useAudioPlayer } from "@/lib/hooks/useAudioPlayer";
@@ -20,6 +21,7 @@ import ConversationPanel from "@/components/chat/ConversationPanel";
 import CoachingPanel from "@/components/chat/CoachingPanel";
 import { HUME_FREE_PREVIEW_LIMIT } from "@/lib/subscription";
 import type { Scenario, Session } from "@/lib/types/database";
+import { getSessionLimits, getElapsedSeconds } from "@/lib/types/database";
 
 export default function SessionPage() {
   const params = useParams<{ sessionId: string }>();
@@ -31,6 +33,8 @@ export default function SessionPage() {
   const [subscriptionTier, setSubscriptionTier] = useState<"free" | "premium">("free");
   const [ending, setEnding] = useState(false);
   const [mobileCoachingOpen, setMobileCoachingOpen] = useState(false);
+  const [sessionWarning, setSessionWarning] = useState<string | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
 
   const {
     messages,
@@ -43,6 +47,8 @@ export default function SessionPage() {
     isStreaming,
     streamingText,
     error,
+    sessionWarning: chatWarning,
+    sessionLimitReached,
     sendMessage,
     sendVoiceMessage,
   } = useChat(sessionId);
@@ -52,9 +58,37 @@ export default function SessionPage() {
   // Voice mode can be toggled within a session — default to the session mode
   const [voiceEnabled, setVoiceEnabled] = useState(false);
 
+  const handleEndSession = useCallback(async () => {
+    if (ending) return;
+    setEnding(true);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/end`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to end session");
+      router.push(`/practice/${sessionId}/score`);
+    } catch {
+      setEnding(false);
+    }
+  }, [ending, sessionId, router]);
+
   useEffect(() => {
     if (session?.mode === "voice") setVoiceEnabled(true);
   }, [session?.mode]);
+
+  // Sync chat warnings
+  useEffect(() => {
+    if (chatWarning) setSessionWarning(chatWarning);
+  }, [chatWarning]);
+
+  // Auto-end when session limit reached
+  useEffect(() => {
+    if (sessionLimitReached) {
+      setSessionWarning("Round complete — let's review your session.");
+      const timer = setTimeout(() => handleEndSession(), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [sessionLimitReached, handleEndSession]);
 
   // Fetch session + scenario data
   useEffect(() => {
@@ -73,19 +107,29 @@ export default function SessionPage() {
     if (sessionId) fetchSession();
   }, [sessionId]);
 
-  const handleEndSession = async () => {
-    if (ending) return;
-    setEnding(true);
-    try {
-      const res = await fetch(`/api/sessions/${sessionId}/end`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to end session");
-      router.push(`/practice/${sessionId}/score`);
-    } catch {
-      setEnding(false);
-    }
-  };
+  // Timer: update time remaining every second
+  useEffect(() => {
+    if (!session || session.status !== "active") return;
+    const limits = getSessionLimits(session.round_type ?? "standard", session.mode);
+
+    const interval = setInterval(() => {
+      const elapsed = getElapsedSeconds(session.started_at);
+      const remaining = Math.max(0, limits.max_duration_seconds - elapsed);
+
+      if (remaining <= 0) {
+        setTimeRemaining("0:00");
+        handleEndSession();
+        clearInterval(interval);
+        return;
+      }
+
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      setTimeRemaining(`${mins}:${secs.toString().padStart(2, "0")}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [session, handleEndSession]);
 
   const partnerName = scenario?.partner_persona?.name ?? "Partner";
   const isPremiumUser = subscriptionTier === "premium";
@@ -110,6 +154,12 @@ export default function SessionPage() {
               {voiceEnabled && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal gap-1">
                   🎤 Voice
+                </Badge>
+              )}
+              {timeRemaining && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal gap-1">
+                  <Clock className="h-3 w-3" />
+                  {timeRemaining}
                 </Badge>
               )}
             </h2>
@@ -160,6 +210,14 @@ export default function SessionPage() {
       {error && (
         <div className="border-b border-destructive/30 bg-destructive/5 px-4 py-2 text-xs text-destructive">
           {error}
+        </div>
+      )}
+
+      {/* Session warning banner */}
+      {sessionWarning && (
+        <div className="border-b border-primary/20 bg-primary/5 px-4 py-2 text-xs text-primary flex items-center gap-2">
+          <Clock className="h-3.5 w-3.5 shrink-0" />
+          {sessionWarning}
         </div>
       )}
 

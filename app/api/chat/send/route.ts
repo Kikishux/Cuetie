@@ -5,6 +5,7 @@ import { buildChatPrompt } from "@/lib/ai/prompt-builder";
 import { parseAIResponse } from "@/lib/ai/response-parser";
 import { getOpenAIClient, CHAT_CONFIG } from "@/lib/ai/config";
 import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/database";
+import { getSessionLimits, getUserTurnCount, getElapsedSeconds } from "@/lib/types/database";
 
 const humeEmotionResultSchema = z.object({
   topEmotions: z.array(
@@ -89,6 +90,48 @@ export async function POST(request: NextRequest) {
           );
           controller.close();
           return;
+        }
+
+        // --- Check session limits ---
+        const limits = getSessionLimits(session.round_type ?? "standard", session.mode);
+        const userTurns = getUserTurnCount(session.message_count);
+        const elapsed = getElapsedSeconds(session.started_at);
+        const turnsRemaining = limits.max_user_turns - userTurns;
+
+        if (userTurns >= limits.max_user_turns) {
+          controller.enqueue(
+            encoder.encode(sseEvent("session_limit", { reason: "turns", turnsRemaining: 0 }))
+          );
+          controller.close();
+          return;
+        }
+
+        if (elapsed >= limits.max_duration_seconds) {
+          controller.enqueue(
+            encoder.encode(sseEvent("session_limit", { reason: "time", turnsRemaining }))
+          );
+          controller.close();
+          return;
+        }
+
+        if (session.total_tokens >= limits.max_tokens) {
+          controller.enqueue(
+            encoder.encode(sseEvent("session_limit", { reason: "tokens", turnsRemaining }))
+          );
+          controller.close();
+          return;
+        }
+
+        // Send warning if approaching turn limit
+        if (turnsRemaining <= limits.warn_at_turns_remaining && turnsRemaining > 0) {
+          controller.enqueue(
+            encoder.encode(sseEvent("session_warning", {
+              turnsRemaining,
+              message: turnsRemaining === 1
+                ? "Last reply — practice wrapping up or making plans."
+                : `${turnsRemaining} replies left — great time to practice your close.`,
+            }))
+          );
         }
 
         // --- Fetch scenario ---

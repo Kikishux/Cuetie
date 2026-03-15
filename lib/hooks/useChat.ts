@@ -19,6 +19,8 @@ interface UseChatReturn {
   isStreaming: boolean;
   streamingText: string;
   error: string | null;
+  sessionWarning: string | null;
+  sessionLimitReached: boolean;
   sendMessage: (
     content: string,
     audioFeatures?: AudioFeatures | null,
@@ -38,6 +40,8 @@ export function useChat(sessionId: string): UseChatReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
+  const [sessionWarning, setSessionWarning] = useState<string | null>(null);
+  const [sessionLimitReached, setSessionLimitReached] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const pendingVoiceCoachingRef = useRef<VoiceCoaching | null>(null);
@@ -164,6 +168,13 @@ export function useChat(sessionId: string): UseChatReturn {
                   partnerCoaching = mergeVoiceTone(event.data as CoachingData);
                   setCoaching(partnerCoaching);
                   break;
+                case "session_warning":
+                  setSessionWarning(event.message ?? "You're nearing the end of this round.");
+                  break;
+                case "session_limit":
+                  setSessionLimitReached(true);
+                  setSessionWarning(null);
+                  throw new Error("SESSION_LIMIT_REACHED");
                 case "error":
                   throw new Error(event.message ?? "Stream error");
                 case "done":
@@ -318,6 +329,8 @@ export function useChat(sessionId: string): UseChatReturn {
     isStreaming,
     streamingText,
     error,
+    sessionWarning,
+    sessionLimitReached,
     sendMessage,
     sendVoiceMessage,
     loadMessages,

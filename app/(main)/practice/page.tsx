@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Sparkles, MessageCircle, Mic, Search } from "lucide-react";
 import ScenarioCard from "@/components/chat/ScenarioCard";
+import RoundSelector from "@/components/chat/RoundSelector";
 import type {
   Scenario,
   DifficultyLevel,
   ScenarioCategory,
   SessionMode,
+  RoundType,
 } from "@/lib/types/database";
 import type {
   RecommendedScenariosResponse,
@@ -119,6 +121,8 @@ export default function PracticePage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sessionMode, setSessionMode] = useState<SessionMode>("text");
+  const [roundSelectorOpen, setRoundSelectorOpen] = useState(false);
+  const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -173,18 +177,28 @@ export default function PracticePage() {
   }, []);
 
   const handleStart = async (scenarioId: string) => {
-    if (starting) return;
-    setStarting(scenarioId);
+    setPendingScenarioId(scenarioId);
+    setRoundSelectorOpen(true);
+  };
+
+  const handleRoundSelected = async (roundType: RoundType) => {
+    if (!pendingScenarioId || starting) return;
+    setStarting(pendingScenarioId);
     setError(null);
 
     try {
       const res = await fetch("/api/sessions/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenarioId, mode: sessionMode }),
+        body: JSON.stringify({
+          scenarioId: pendingScenarioId,
+          mode: sessionMode,
+          roundType,
+        }),
       });
       if (!res.ok) throw new Error("Failed to start session");
       const data = await res.json();
+      setRoundSelectorOpen(false);
       router.push(`/practice/${data.session.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start");
@@ -400,6 +414,15 @@ export default function PracticePage() {
           No scenarios match your filters. Try adjusting your search or filters.
         </div>
       )}
+
+      {/* Round selector dialog */}
+      <RoundSelector
+        open={roundSelectorOpen}
+        onClose={() => { setRoundSelectorOpen(false); setPendingScenarioId(null); }}
+        onSelect={handleRoundSelected}
+        isPremium={false}
+        isLoading={!!starting}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { getPartnerName } from "@/lib/ai/name-pools";
 const startSessionSchema = z.object({
   scenarioId: z.string().min(1),
   mode: z.enum(["text", "voice"]).default("text"),
+  roundType: z.enum(["quick", "standard", "deep"]).default("standard"),
 });
 
 export async function POST(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { scenarioId, mode } = parsed.data;
+    const { scenarioId, mode, roundType } = parsed.data;
 
     // --- Authenticate ---
     const supabase = await createClient();
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         scenario_id: scenarioId,
         mode: mode as "text" | "voice",
+        round_type: roundType,
         status: "active" as const,
       })
       .select("*")
