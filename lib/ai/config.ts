@@ -15,7 +15,7 @@ export const CHAT_CONFIG: PromptConfig = {
 
 export const SCORECARD_CONFIG: PromptConfig = {
   model: "gpt-4o",
-  temperature: 0.3,
+  temperature: 0.2,
   max_tokens: 2000,
   response_format: { type: "json_object" },
 };

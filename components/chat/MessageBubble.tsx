@@ -87,9 +87,9 @@ export default function MessageBubble({
           {formatTime(message.created_at)}
         </span>
 
-        {/* Inline micro-cue coaching nudge */}
-        {isUser && message.coaching?.micro_cue && (
-          <span className="text-[11px] text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5 mt-0.5 inline-block">
+        {/* Inline micro-cue coaching nudge — shown on partner messages as feedback about the user's previous turn */}
+        {!isUser && message.coaching?.micro_cue && (
+          <span className="text-[11px] text-muted-foreground bg-primary/5 border border-primary/15 rounded-full px-2.5 py-0.5 mt-0.5 inline-block">
             {message.coaching.micro_cue}
           </span>
         )}
