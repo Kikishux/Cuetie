@@ -86,10 +86,14 @@ function SessionPageInner() {
       const res = await fetch(`/api/sessions/${sessionId}/end`, {
         method: "POST",
       });
-      if (!res.ok) throw new Error("Failed to end session");
+      if (!res.ok) {
+        // Still redirect to score page — it handles missing scorecards gracefully
+        console.warn("End session returned non-OK, redirecting to score page anyway");
+      }
       router.push(`/practice/${sessionId}/score`);
     } catch {
-      setEnding(false);
+      // Always redirect — scorecard page will show error if no scorecard exists
+      router.push(`/practice/${sessionId}/score`);
     }
   }, [ending, sessionId, router]);
 

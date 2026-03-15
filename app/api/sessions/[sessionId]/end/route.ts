@@ -37,10 +37,11 @@ export async function POST(
     }
 
     if (session.status !== "active") {
-      return NextResponse.json<ErrorResponse>(
-        { error: { code: "SESSION_ENDED", message: "Session is already completed" } },
-        { status: 400 }
-      );
+      // Idempotent: return existing scorecard if session already ended
+      return NextResponse.json<EndSessionResponse>({
+        scorecard: session.scorecard ?? { overall_score: 0, skills: {}, highlights: [], growth_areas: [], suggested_scenarios: [], session_duration_minutes: 0, message_count: 0 },
+        session,
+      });
     }
 
     // --- Fetch messages ---

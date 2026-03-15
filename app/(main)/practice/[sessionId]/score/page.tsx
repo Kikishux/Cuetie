@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import SessionScorecard from "@/components/chat/SessionScorecard";
 import type { Scorecard, Session } from "@/lib/types/database";
+
+const MAX_RETRIES = 8;
+const RETRY_DELAY_MS = 2500;
 
 export default function ScorePage() {
   const params = useParams<{ sessionId: string }>();
@@ -13,26 +16,50 @@ export default function ScorePage() {
   const [scorecard, setScorecard] = useState<Scorecard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const retriesRef = useRef(0);
 
   useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+
     async function fetchScore() {
       try {
         const res = await fetch(`/api/sessions/${sessionId}`);
         if (!res.ok) throw new Error("Failed to load session");
         const data = await res.json();
         const session: Session = data.session ?? data;
+
+        if (cancelled) return;
+
         if (session.scorecard) {
           setScorecard(session.scorecard);
+          setLoading(false);
+        } else if (retriesRef.current < MAX_RETRIES) {
+          // Scorecard not ready yet — retry after delay
+          retriesRef.current += 1;
+          setTimeout(() => {
+            if (!cancelled) fetchScore();
+          }, RETRY_DELAY_MS);
         } else {
-          setError("No scorecard available for this session.");
+          setError("Scorecard generation is taking longer than expected. Please check back from your dashboard.");
+          setLoading(false);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      } finally {
-        setLoading(false);
+        if (cancelled) return;
+        if (retriesRef.current < MAX_RETRIES) {
+          retriesRef.current += 1;
+          setTimeout(() => {
+            if (!cancelled) fetchScore();
+          }, RETRY_DELAY_MS);
+        } else {
+          setError(err instanceof Error ? err.message : "Something went wrong");
+          setLoading(false);
+        }
       }
     }
-    if (sessionId) fetchScore();
+
+    fetchScore();
+    return () => { cancelled = true; };
   }, [sessionId]);
 
   if (loading) {
