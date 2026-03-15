@@ -11,6 +11,7 @@ interface MessageBubbleProps {
   partnerName: string;
   isStreaming?: boolean;
   voiceMode?: boolean;
+  microCue?: string | null;
 }
 
 function formatTime(dateStr: string): string {
@@ -29,6 +30,7 @@ export default function MessageBubble({
   partnerName,
   isStreaming = false,
   voiceMode = false,
+  microCue,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
@@ -87,10 +89,10 @@ export default function MessageBubble({
           {formatTime(message.created_at)}
         </span>
 
-        {/* Inline micro-cue coaching nudge — shown on partner messages as feedback about the user's previous turn */}
-        {!isUser && message.coaching?.micro_cue && (
+        {/* Inline micro-cue coaching nudge — shown under user messages as feedback about what they could improve */}
+        {isUser && microCue && (
           <span className="text-[11px] text-muted-foreground bg-primary/5 border border-primary/15 rounded-full px-2.5 py-0.5 mt-0.5 inline-block">
-            {message.coaching.micro_cue}
+            {microCue}
           </span>
         )}
       </div>

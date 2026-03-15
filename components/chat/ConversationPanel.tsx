@@ -151,14 +151,21 @@ export default function ConversationPanel({
             </div>
           )}
 
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              partnerName={partnerName}
-              voiceMode={voiceMode}
-            />
-          ))}
+          {messages.map((msg, i) => {
+            // For user messages, grab the micro_cue from the next partner response
+            const nextMsg = msg.role === "user" ? messages[i + 1] : null;
+            const microCue = nextMsg?.role === "partner" ? nextMsg.coaching?.micro_cue : undefined;
+
+            return (
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                partnerName={partnerName}
+                voiceMode={voiceMode}
+                microCue={microCue ?? null}
+              />
+            );
+          })}
 
           {streamingMessage && (
             <MessageBubble

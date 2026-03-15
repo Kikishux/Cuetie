@@ -120,13 +120,14 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
   schema.push("  }", "}");
   schema.push("");
   schema.push("=== MICRO-CUE RULES ===");
-  schema.push("Set micro_cue to a brief coaching nudge (max 8 words) based on the user's message:");
+  schema.push("Set micro_cue to a brief coaching nudge (max 8 words) based on the user's LATEST message ONLY:");
   schema.push('  - If user asked no question: "💬 Try asking a follow-up question"');
   schema.push('  - If user asked a great question: "✨ Great question!"');
-  schema.push('  - If partner embedded a cue user could explore: "🔍 They mentioned [topic] — explore that"');
+  schema.push('  - If the partner\'s MOST RECENT message (not earlier turns) embedded a cue: "🔍 They mentioned [topic] — explore that"');
   schema.push('  - If user response was very short: "📝 Try sharing a bit more"');
   schema.push('  - If user showed genuine empathy: "❤️ Nice empathetic response"');
   schema.push("  - Set to null if no specific nudge is needed");
+  schema.push("  IMPORTANT: Only reference cues/topics from the partner's MOST RECENT message. Never repeat cues from earlier turns.");
 
   return schema.join("\n");
 }
