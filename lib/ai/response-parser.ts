@@ -31,6 +31,7 @@ const coachingDataSchema = z.object({
 });
 
 export const aiResponseSchema = z.object({
+  micro_cue: z.string().nullish(),
   partner_response: z.string().min(1),
   coaching: coachingDataSchema,
 });
@@ -47,7 +48,9 @@ function extractPartialCoaching(json: unknown): Partial<CoachingData> {
   const result: Partial<CoachingData> = {};
   if (typeof coaching.cue_decoded === "string") result.cue_decoded = coaching.cue_decoded;
   if (typeof coaching.suggestion === "string") result.suggestion = coaching.suggestion;
-  if (typeof coaching.micro_cue === "string") result.micro_cue = coaching.micro_cue;
+  // micro_cue may be at top level (new schema) or inside coaching (legacy)
+  if (typeof obj.micro_cue === "string") result.micro_cue = obj.micro_cue;
+  else if (typeof coaching.micro_cue === "string") result.micro_cue = coaching.micro_cue;
   if (coaching.tone_analysis && typeof coaching.tone_analysis === "object") {
     const ta = coaching.tone_analysis as Record<string, unknown>;
     result.tone_analysis = {
@@ -93,7 +96,12 @@ export function parseAIResponse(rawContent: string): AIResponse {
     const result = aiResponseSchema.safeParse(json);
 
     if (result.success) {
-      return result.data as AIResponse;
+      const data = result.data;
+      // Merge top-level micro_cue into coaching (schema moved it outside coaching to force earlier generation)
+      if (data.micro_cue && !data.coaching.micro_cue) {
+        data.coaching.micro_cue = data.micro_cue;
+      }
+      return data as AIResponse;
     }
 
     console.warn(

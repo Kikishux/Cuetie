@@ -90,19 +90,23 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
   const schema = [
     "=== OUTPUT FORMAT ===",
     "You MUST respond with a single JSON object — no markdown, no extra text.",
+    "IMPORTANT: Generate the fields in EXACTLY this order. Write micro_cue FIRST,",
+    "BEFORE you write partner_response. This prevents you from accidentally",
+    "referencing content you haven't written yet.",
+    "",
     "Schema:",
     "{",
-    '  "partner_response": "string — the in-character reply from the partner",',
+    '  "micro_cue": "string — GENERATE THIS FIRST — a brief inline coaching nudge (max 8 words) about the user\'s latest message (see MICRO-CUE RULES below)",',
+    '  "partner_response": "string — GENERATE THIS SECOND — the in-character reply from the partner",',
     '  "coaching": {',
-    '    "cue_decoded": "string — explain a social cue from the partner\'s PREVIOUS message that the user should notice (not from the partner_response you are generating)",',
-    '    "suggestion": "string — actionable advice for the user\'s next message based on what already happened",',
+    '    "cue_decoded": "string — explain a social cue from the conversation that the user should notice",',
+    '    "suggestion": "string — actionable advice for the user\'s next message",',
     '    "tone_analysis": {',
     '      "user_tone": "string — the tone the user conveyed",',
     '      "ideal_tone": "string — the tone that would work best here",',
     '      "rewrite": "string | null — optional improved version of the user\'s message"',
     "    },",
-    '    "skill_tags": ["array of SkillId strings: empathy, question_quality, topic_flow, cue_detection, tone_matching, conversation_pacing, self_disclosure, active_listening"],',
-    '    "micro_cue": "string | null — a brief inline coaching nudge for the user (see MICRO-CUE RULES below)"',
+    '    "skill_tags": ["array of SkillId strings: empathy, question_quality, topic_flow, cue_detection, tone_matching, conversation_pacing, self_disclosure, active_listening"]',
   ];
 
   if (hasAudioFeatures) {
@@ -120,20 +124,20 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
   schema.push("  }", "}");
   schema.push("");
   schema.push("=== MICRO-CUE RULES ===");
-  schema.push("The micro_cue is feedback about the user's LATEST message. It must ONLY reference the conversation");
-  schema.push("history that came BEFORE the user's latest message. Do NOT reference any content from the");
-  schema.push("partner_response you are generating in this output — the user hasn't seen it yet.");
+  schema.push("micro_cue is feedback about the user's LATEST message. You MUST always provide one.");
+  schema.push("It must ONLY reference the conversation history — what the partner PREVIOUSLY said.");
+  schema.push("Since you write micro_cue BEFORE partner_response, you cannot reference it.");
   schema.push("");
-  schema.push("Set micro_cue to a brief coaching nudge (max 8 words):");
+  schema.push("ALWAYS pick the most relevant nudge (max 8 words):");
+  schema.push('  - If user response was very short (1-3 words): "📝 Try sharing a bit more"');
   schema.push('  - If user asked no question: "💬 Try asking a follow-up question"');
   schema.push('  - If user asked a great question: "✨ Great question!"');
-  schema.push('  - If the partner\'s PREVIOUS message (the one the user just replied to) contained a cue the user ignored: "🔍 They mentioned [topic] — explore that"');
-  schema.push('  - If user response was very short: "📝 Try sharing a bit more"');
+  schema.push('  - If the partner\'s PREVIOUS message contained a cue the user ignored: "🔍 They mentioned [topic] — explore that"');
   schema.push('  - If user showed genuine empathy: "❤️ Nice empathetic response"');
-  schema.push("  - Set to null if no specific nudge is needed");
+  schema.push('  - If user shared something personal: "💛 Great self-disclosure"');
+  schema.push('  - If none of the above fit well: "💬 Try asking a follow-up question"');
   schema.push("");
-  schema.push("  CRITICAL: The [topic] in 'They mentioned [topic]' must come from the partner's message that the user");
-  schema.push("  just replied to — NOT from the partner_response you are generating. Never spoil upcoming content.");
+  schema.push("  NEVER set micro_cue to null. Always provide a coaching nudge.");
 
   return schema.join("\n");
 }
