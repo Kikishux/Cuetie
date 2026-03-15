@@ -23,6 +23,7 @@ const humeEmotionResultSchema = z.object({
 const sendMessageSchema = z.object({
   sessionId: z.string().min(1),
   content: z.string().min(1).max(2000),
+  roundType: z.enum(["quick", "standard", "deep"]).optional(),
   audioFeatures: z.object({
     avgPitch: z.number(),
     pitchVariability: z.number(),
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        const { sessionId, content, audioFeatures, humeEmotions } = parsed.data;
+        const { sessionId, content, roundType, audioFeatures, humeEmotions } = parsed.data;
 
         // --- Authenticate ---
         const supabase = await createClient();
@@ -93,7 +94,8 @@ export async function POST(request: NextRequest) {
         }
 
         // --- Check session limits ---
-        const limits = getSessionLimits(session.round_type ?? "standard", session.mode);
+        const effectiveRound = roundType ?? session.round_type ?? "standard";
+        const limits = getSessionLimits(effectiveRound, session.mode);
         const userTurns = getUserTurnCount(session.message_count);
         const elapsed = getElapsedSeconds(session.started_at);
         const turnsRemaining = limits.max_user_turns - userTurns;
@@ -189,7 +191,7 @@ export async function POST(request: NextRequest) {
           audioFeatures,
           humeEmotions,
           {
-            roundType: session.round_type ?? "standard",
+            roundType: effectiveRound,
             mode: session.mode,
             messageCount: session.message_count,
           },

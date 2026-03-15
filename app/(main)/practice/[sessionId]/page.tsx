@@ -72,7 +72,7 @@ function SessionPageInner() {
     sessionLimitReached,
     sendMessage,
     sendVoiceMessage,
-  } = useChat(sessionId);
+  } = useChat(sessionId, resolvedRound);
 
   const audioPlayer = useAudioPlayer();
 

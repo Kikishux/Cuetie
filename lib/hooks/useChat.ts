@@ -30,7 +30,7 @@ interface UseChatReturn {
   loadMessages: (sessionId: string) => Promise<void>;
 }
 
-export function useChat(sessionId: string): UseChatReturn {
+export function useChat(sessionId: string, roundType?: string): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [coaching, setCoaching] = useState<CoachingData | null>(null);
   const [voiceCoaching, setVoiceCoaching] = useState<VoiceCoaching | null>(null);
@@ -120,6 +120,7 @@ export function useChat(sessionId: string): UseChatReturn {
           body: JSON.stringify({
             sessionId,
             content: content.trim(),
+            ...(roundType ? { roundType } : {}),
             ...(audioFeatures ? { audioFeatures } : {}),
             ...(resolvedHumeEmotions ? { humeEmotions: resolvedHumeEmotions } : {}),
           }),
