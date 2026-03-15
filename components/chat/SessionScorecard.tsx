@@ -84,6 +84,7 @@ export default function SessionScorecard({
     scorecard.suggested_scenarios.length > 0
   );
   const [startingIdx, setStartingIdx] = useState<number | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
   const skillEntries = Object.entries(scorecard.skills);
   const suggestionsKey = JSON.stringify(scorecard.suggested_scenarios);
 
@@ -94,6 +95,7 @@ export default function SessionScorecard({
   ) => {
     if (startingIdx !== null) return;
     setStartingIdx(idx);
+    setStartError(null);
     try {
       if (opts.scenarioId) {
         // Matched scenario → start session directly
@@ -148,6 +150,7 @@ export default function SessionScorecard({
       }
     } catch {
       setStartingIdx(null);
+      setStartError("Something went wrong. Please try again.");
     }
   }, [startingIdx, scorecard.growth_areas]);
 
@@ -313,6 +316,11 @@ export default function SessionScorecard({
             <CardTitle className="text-base">🎯 Practice Next</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {startError && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+                {startError}
+              </p>
+            )}
             {loadingSuggestions ? (
               <p className="text-sm text-muted-foreground">
                 Finding matching scenarios...

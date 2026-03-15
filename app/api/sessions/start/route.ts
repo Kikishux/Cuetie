@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { ErrorResponse, StartSessionResponse } from "@/lib/types/api";
 import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/database";
 import { getPartnerName } from "@/lib/ai/name-pools";
@@ -51,14 +52,16 @@ export async function POST(request: NextRequest) {
     let scenario: Scenario | null = null;
 
     if (generatedScenario) {
-      // Insert the generated scenario into the DB
-      const { data: newScenario, error: insertErr } = await supabase
+      // Use admin client to bypass RLS (scenarios table only allows SELECT for users)
+      const admin = createAdminClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: newScenario, error: insertErr } = await (admin as any)
         .from("scenarios")
         .insert({
           title: generatedScenario.title,
           description: generatedScenario.description,
-          difficulty: generatedScenario.difficulty as "beginner" | "intermediate" | "advanced",
-          category: (generatedScenario.category || "texting") as "first_meeting" | "coffee_date" | "dinner_date" | "texting" | "video_call" | "awkward_moments" | "deepening_connection" | "conflict_resolution",
+          difficulty: generatedScenario.difficulty,
+          category: generatedScenario.category || "texting",
           partner_persona: generatedScenario.partner_persona,
           coaching_focus: generatedScenario.coaching_focus,
           opening_message: generatedScenario.opening_message,
@@ -66,29 +69,16 @@ export async function POST(request: NextRequest) {
           sort_order: 999,
         })
         .select("*")
-        .single<Scenario>();
+        .single();
 
       if (insertErr) {
         console.error("[sessions/start] Failed to insert generated scenario:", insertErr.message);
-        // Fallback: create a minimal scenario object without DB persistence
-        scenario = {
-          id: crypto.randomUUID(),
-          title: generatedScenario.title,
-          description: generatedScenario.description,
-          difficulty: (generatedScenario.difficulty || "beginner") as "beginner" | "intermediate" | "advanced",
-          category: "texting" as const,
-          partner_persona: generatedScenario.partner_persona as unknown as Scenario["partner_persona"],
-          coaching_focus: generatedScenario.coaching_focus,
-          opening_message: generatedScenario.opening_message,
-          is_active: false,
-          sort_order: 999,
-          created_at: new Date().toISOString(),
-        };
-        // Try inserting with the generated UUID
-        await supabase.from("scenarios").insert({ ...scenario }).select("id").single();
-      } else {
-        scenario = newScenario;
+        return NextResponse.json<ErrorResponse>(
+          { error: { code: "DB_ERROR", message: "Failed to create practice scenario" } },
+          { status: 500 }
+        );
       }
+      scenario = newScenario as Scenario;
     } else {
       const { data: fetchedScenario } = await supabase
         .from("scenarios")
