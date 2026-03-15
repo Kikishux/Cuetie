@@ -102,7 +102,6 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
     '      "rewrite": "string | null — optional improved version of the user\'s message"',
     "    },",
     '    "skill_tags": ["array of SkillId strings: empathy, question_quality, topic_flow, cue_detection, tone_matching, conversation_pacing, self_disclosure, active_listening"],',
-    '    "skill_scores": { "skill_id": "number 0-10 (only include skills relevant to this turn)" },',
     '    "micro_cue": "string | null — a brief inline coaching nudge for the user (see MICRO-CUE RULES below)"',
   ];
 
@@ -119,25 +118,6 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
   }
 
   schema.push("  }", "}");
-  schema.push("");
-  schema.push("=== SCORING RUBRIC (MANDATORY) ===");
-  schema.push("Apply these anchors STRICTLY when assigning skill_scores:");
-  schema.push("  0-1: Complete failure. (Single word like 'ok', 'yeah', 'nice', 'no'. Zero engagement.)");
-  schema.push("  2-3: Very weak. (One short sentence, no questions, no emotional engagement, ignored partner's cues.)");
-  schema.push("  4-5: Below average. (Brief response with minimal substance. May have tried but fell short.)");
-  schema.push("  6-7: Adequate. (Real effort visible — asked a question OR shared something personal OR acknowledged partner.)");
-  schema.push("  8-9: Strong. (Multiple good behaviors — asked follow-up AND showed empathy AND built on partner's topic.)");
-  schema.push("  10: Exceptional. (Would genuinely impress a professional dating coach. Extremely rare.)");
-  schema.push("");
-  schema.push("HARD RULES — MUST BE FOLLOWED:");
-  schema.push("- Single-word response ('yeah', 'ok', 'nice', 'no', 'sure', a single noun) → ALL skills MUST be 0-2");
-  schema.push("- One short sentence with no question → question_quality MUST be 0-1");
-  schema.push("- Response under 10 words → conversation_pacing MUST be 0-3");
-  schema.push("- Did not acknowledge anything the partner said → active_listening MUST be 0-2");
-  schema.push("- Did not reference partner's interests/feelings → empathy MUST be 0-2");
-  schema.push("- Changed topic abruptly without transition → topic_flow MUST be 0-3");
-  schema.push("- Scores of 6+ require EVIDENCE of genuine effort (asked a question, shared details, built on topic)");
-  schema.push("- The AVERAGE of skill_scores should match the actual quality of the response. Do NOT round up.");
   schema.push("");
   schema.push("=== MICRO-CUE RULES ===");
   schema.push("Set micro_cue to a brief coaching nudge (max 8 words) based on the user's message:");

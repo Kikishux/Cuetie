@@ -302,7 +302,6 @@ function SessionPageInner() {
           <CoachingPanel
             coaching={coaching}
             voiceCoaching={voiceCoaching}
-            sessionScores={coaching?.skill_scores}
             humeEmotions={humeEmotions}
             humeAnalysisLimitReached={humeAnalysisLimitReached}
           />
@@ -333,7 +332,6 @@ function SessionPageInner() {
               <CoachingPanel
                 coaching={coaching}
                 voiceCoaching={voiceCoaching}
-                sessionScores={coaching?.skill_scores}
                 humeEmotions={humeEmotions}
                 humeAnalysisLimitReached={humeAnalysisLimitReached}
               />

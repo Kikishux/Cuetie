@@ -4,7 +4,6 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SafeMotion, SafeAnimatePresence } from "@/components/shared/SafeMotion";
 import { useSensoryOptional } from "@/components/shared/SensoryProvider";
-import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
 import { BarChart3, BrainCircuit, ChevronDown, ChevronUp, Mic } from "lucide-react";
 import CoachingCard from "@/components/chat/CoachingCard";
 import { DeepEmotionCard } from "@/components/chat/DeepEmotionCard";
@@ -16,7 +15,6 @@ import type { HumeEmotionResult } from "@/lib/types/hume";
 interface CoachingPanelProps {
   coaching: CoachingData | null;
   voiceCoaching?: VoiceCoaching | null;
-  sessionScores?: Partial<Record<SkillId, number>>;
   humeEmotions?: HumeEmotionResult | null;
   humeAnalysisLimitReached?: boolean;
 }
@@ -47,18 +45,11 @@ const emotionEmojis: Record<string, string> = {
 export default function CoachingPanel({
   coaching,
   voiceCoaching,
-  sessionScores,
   humeEmotions,
   humeAnalysisLimitReached = false,
 }: CoachingPanelProps) {
   const { isCondensed, isQuietSession } = useSensoryOptional();
   const [showVoiceDetails, setShowVoiceDetails] = useState(false);
-  const scores = sessionScores ?? coaching?.skill_scores;
-  const scoreEntries = scores
-    ? (Object.entries(scores) as [SkillId, number][]).filter(
-        ([, v]) => v != null
-      )
-    : [];
 
   const voiceTone = coaching?.voice_tone;
   const derivedHumeEmotions: HumeEmotionResult | null = coaching?.hume_emotions
@@ -280,27 +271,6 @@ export default function CoachingPanel({
       )}
 
       {humeAnalysisLimitReached && <PremiumUpgradePrompt />}
-
-      {/* Session skill scores */}
-      {scoreEntries.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Session Skills
-          </h3>
-          <div className="space-y-2.5">
-            {scoreEntries.map(([skillId, score]) => (
-              <Progress key={skillId} value={score * 10} max={100}>
-                <ProgressLabel className="text-xs">
-                  {skillLabels[skillId] ?? skillId}
-                </ProgressLabel>
-                <ProgressValue className="text-xs">
-                  {() => score.toFixed(1)}
-                </ProgressValue>
-              </Progress>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
