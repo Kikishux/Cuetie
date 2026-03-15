@@ -49,18 +49,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Create session ---
-    const { data: session, error: sessionError } = await supabase
+    // --- Create session (gracefully handle missing round_type column) ---
+    let session: Session | null = null;
+    let sessionError: Error | null = null;
+
+    const sessionInsert = {
+      user_id: user.id,
+      scenario_id: scenarioId,
+      mode: mode as "text" | "voice",
+      round_type: roundType,
+      status: "active" as const,
+    };
+
+    const result = await supabase
       .from("sessions")
-      .insert({
-        user_id: user.id,
-        scenario_id: scenarioId,
-        mode: mode as "text" | "voice",
-        round_type: roundType,
-        status: "active" as const,
-      })
+      .insert(sessionInsert)
       .select("*")
       .single<Session>();
+
+    if (result.error) {
+      // If round_type column doesn't exist, retry without it
+      const fallback = await supabase
+        .from("sessions")
+        .insert({
+          user_id: user.id,
+          scenario_id: scenarioId,
+          mode: mode as "text" | "voice",
+          status: "active" as const,
+        })
+        .select("*")
+        .single<Session>();
+
+      session = fallback.data;
+      sessionError = fallback.error as Error | null;
+    } else {
+      session = result.data;
+    }
 
     if (sessionError || !session) {
       return NextResponse.json<ErrorResponse>(
@@ -68,6 +92,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Ensure round_type is available in the response even if not stored in DB
+    const sessionWithRound = { ...session, round_type: session.round_type ?? roundType };
 
     // --- Create opening message ---
     const { data: openingMessage, error: messageError } = await supabase
@@ -112,7 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json<StartSessionResponse>({
-      session: { ...session, message_count: 1 },
+      session: { ...sessionWithRound, message_count: 1 },
       scenario,
       openingMessage,
     });

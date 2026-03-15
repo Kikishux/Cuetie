@@ -199,6 +199,7 @@ export default function PracticePage() {
       if (!res.ok) throw new Error("Failed to start session");
       const data = await res.json();
       setRoundSelectorOpen(false);
+      setStarting(null);
       router.push(`/practice/${data.session.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start");
