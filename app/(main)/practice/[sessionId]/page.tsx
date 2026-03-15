@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
   BrainCircuit,
   X,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { useChat } from "@/lib/hooks/useChat";
 import { useAudioPlayer } from "@/lib/hooks/useAudioPlayer";
@@ -26,6 +27,18 @@ import { getSessionLimits, getElapsedSeconds } from "@/lib/types/database";
 const VALID_ROUNDS = new Set<string>(["quick", "standard", "deep"]);
 
 export default function SessionPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SessionPageInner />
+    </Suspense>
+  );
+}
+
+function SessionPageInner() {
   const params = useParams<{ sessionId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
