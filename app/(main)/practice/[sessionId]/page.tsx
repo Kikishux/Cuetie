@@ -173,9 +173,9 @@ export default function SessionPage() {
   const isPremiumUser = subscriptionTier === "premium";
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] flex-col">
+    <div className="-mx-4 -mt-6 -mb-6 sm:-mx-6 lg:-mx-8 flex flex-col" style={{ height: "calc(100vh - 8rem)" }}>
       {/* Session header */}
-      <div className="flex items-center justify-between border-b px-4 py-2.5">
+      <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-2.5">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
