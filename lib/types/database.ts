@@ -260,10 +260,23 @@ export interface Scorecard {
 
 export interface FineTuneRecommendation {
   title: string;
+  why: string;
+  practice_goal: string;
   skill_focus: SkillId[];
   matched_scenario_id?: string;
   is_finetune: boolean;
 }
+
+export const SKILL_LABELS: Record<SkillId, string> = {
+  empathy: "Empathy",
+  question_quality: "Question Quality",
+  topic_flow: "Topic Flow",
+  cue_detection: "Cue Detection",
+  tone_matching: "Tone Matching",
+  conversation_pacing: "Conversation Pacing",
+  self_disclosure: "Self-Disclosure",
+  active_listening: "Active Listening",
+};
 
 export interface GeneratedScenario {
   title: string;

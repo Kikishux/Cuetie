@@ -28,7 +28,8 @@ import {
   MessageSquare,
   Loader2,
 } from "lucide-react";
-import type { Scorecard, Scenario, FineTuneRecommendation } from "@/lib/types/database";
+import type { Scorecard, Scenario, FineTuneRecommendation, SkillId } from "@/lib/types/database";
+import { SKILL_LABELS } from "@/lib/types/database";
 
 interface SessionScorecardProps {
   scorecard: Scorecard;
@@ -89,7 +90,7 @@ export default function SessionScorecard({
   // Start a session — either with a matched scenario or a generated Fine-Tune one
   const startSession = useCallback(async (
     idx: number,
-    opts: { scenarioId?: string; title: string; skillFocus: string[] }
+    opts: { scenarioId?: string; title: string; skillFocus: string[]; why?: string; practiceGoal?: string }
   ) => {
     if (startingIdx !== null) return;
     setStartingIdx(idx);
@@ -109,7 +110,14 @@ export default function SessionScorecard({
         const data = await res.json();
         window.location.href = `/practice/${data.session.id}?round=quick`;
       } else {
-        // No match → generate dynamic micro-scenario via AI
+        // No match → generate dynamic micro-scenario via AI with session context
+        const contextParts: string[] = [];
+        if (opts.why) contextParts.push(`Reason: ${opts.why}`);
+        if (opts.practiceGoal) contextParts.push(`Goal: ${opts.practiceGoal}`);
+        if (scorecard.growth_areas?.length > 0) {
+          contextParts.push(`Growth areas: ${scorecard.growth_areas.join("; ")}`);
+        }
+
         const genRes = await fetch("/api/scenarios/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -117,6 +125,7 @@ export default function SessionScorecard({
             title: opts.title,
             skill_focus: opts.skillFocus.length > 0 ? opts.skillFocus : ["question_quality"],
             difficulty: "beginner",
+            context: contextParts.length > 0 ? contextParts.join(". ") : undefined,
           }),
         });
         if (!genRes.ok) throw new Error("Failed to generate scenario");
@@ -140,7 +149,7 @@ export default function SessionScorecard({
     } catch {
       setStartingIdx(null);
     }
-  }, [startingIdx]);
+  }, [startingIdx, scorecard.growth_areas]);
 
   useEffect(() => {
     if (scorecard.suggested_scenarios.length === 0) {
@@ -316,6 +325,11 @@ export default function SessionScorecard({
                   const title = rec ? rec.title : String(item);
                   const matchedId = rec?.matched_scenario_id;
                   const skillFocus = rec?.skill_focus ?? [];
+                  const why = rec?.why;
+                  const practiceGoal = rec?.practice_goal;
+                  const skillLabels = skillFocus
+                    .map(s => SKILL_LABELS[s as SkillId] ?? s.replace(/_/g, " "))
+                    .join(", ");
 
                   // Only match by explicit matched_scenario_id — no fuzzy title matching
                   const matched = matchedId
@@ -337,15 +351,21 @@ export default function SessionScorecard({
                         <button
                           type="button"
                           disabled={isDisabled}
-                          onClick={() => startSession(i, { scenarioId: matched.id, title: matched.title, skillFocus })}
+                          onClick={() => startSession(i, { scenarioId: matched.id, title: matched.title, skillFocus, why, practiceGoal })}
                           className="group flex w-full items-start justify-between gap-3 rounded-xl border bg-muted/20 p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold leading-6">
                               {matched.title}
                             </p>
+                            {why && (
+                              <p className="mt-1 text-xs text-muted-foreground/80 italic">
+                                💡 {why}
+                              </p>
+                            )}
                             <p className="mt-1 text-xs text-muted-foreground">
                               {matched.difficulty} · {matched.category.replace(/_/g, " ")}
+                              {practiceGoal && ` · Goal: ${practiceGoal}`}
                             </p>
                           </div>
                           {isLoading ? (
@@ -369,19 +389,29 @@ export default function SessionScorecard({
                       <button
                         type="button"
                         disabled={isDisabled}
-                        onClick={() => startSession(i, { title, skillFocus })}
+                        onClick={() => startSession(i, { title, skillFocus, why, practiceGoal })}
                         className="group flex w-full items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/[0.03] p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <Zap className="h-3.5 w-3.5 text-primary" />
                             <p className="text-sm font-semibold leading-6">{title}</p>
                           </div>
+                          {why && (
+                            <p className="mt-1 text-xs text-muted-foreground/80 italic">
+                              💡 {why}
+                            </p>
+                          )}
                           <p className="mt-1 text-xs text-muted-foreground">
                             {isLoading
                               ? "Generating scenario..."
-                              : `Fine-Tune Skills · Quick · 5 min${skillFocus.length > 0 ? ` · ${skillFocus.join(", ")}` : ""}`}
+                              : `Fine-Tune Skills · Quick · 5 min${skillLabels ? ` · ${skillLabels}` : ""}`}
                           </p>
+                          {practiceGoal && !isLoading && (
+                            <p className="mt-0.5 text-xs text-primary/70">
+                              🎯 {practiceGoal}
+                            </p>
+                          )}
                         </div>
                         {isLoading ? (
                           <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
