@@ -6,7 +6,7 @@ import type { Message, OnboardingProfile, Scenario, Session } from "@/lib/types/
 import { getPartnerName } from "@/lib/ai/name-pools";
 
 const startSessionSchema = z.object({
-  scenarioId: z.string().min(1),
+  scenarioId: z.string().default("generated"),
   mode: z.enum(["text", "voice"]).default("text"),
   roundType: z.enum(["quick", "standard", "deep"]).default("standard"),
   isFinetune: z.boolean().optional(),
@@ -52,23 +52,43 @@ export async function POST(request: NextRequest) {
 
     if (generatedScenario) {
       // Insert the generated scenario into the DB
-      const { data: newScenario } = await supabase
+      const { data: newScenario, error: insertErr } = await supabase
         .from("scenarios")
         .insert({
           title: generatedScenario.title,
           description: generatedScenario.description,
-          difficulty: generatedScenario.difficulty,
-          category: generatedScenario.category,
+          difficulty: generatedScenario.difficulty as "beginner" | "intermediate" | "advanced",
+          category: (generatedScenario.category || "texting") as "first_meeting" | "coffee_date" | "dinner_date" | "texting" | "video_call" | "awkward_moments" | "deepening_connection" | "conflict_resolution",
           partner_persona: generatedScenario.partner_persona,
           coaching_focus: generatedScenario.coaching_focus,
           opening_message: generatedScenario.opening_message,
-          is_active: false, // Don't show in browse list
+          is_active: false,
           sort_order: 999,
         })
         .select("*")
         .single<Scenario>();
 
-      scenario = newScenario;
+      if (insertErr) {
+        console.error("[sessions/start] Failed to insert generated scenario:", insertErr.message);
+        // Fallback: create a minimal scenario object without DB persistence
+        scenario = {
+          id: crypto.randomUUID(),
+          title: generatedScenario.title,
+          description: generatedScenario.description,
+          difficulty: (generatedScenario.difficulty || "beginner") as "beginner" | "intermediate" | "advanced",
+          category: "texting" as const,
+          partner_persona: generatedScenario.partner_persona as unknown as Scenario["partner_persona"],
+          coaching_focus: generatedScenario.coaching_focus,
+          opening_message: generatedScenario.opening_message,
+          is_active: false,
+          sort_order: 999,
+          created_at: new Date().toISOString(),
+        };
+        // Try inserting with the generated UUID
+        await supabase.from("scenarios").insert({ ...scenario }).select("id").single();
+      } else {
+        scenario = newScenario;
+      }
     } else {
       const { data: fetchedScenario } = await supabase
         .from("scenarios")
