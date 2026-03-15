@@ -219,6 +219,7 @@ export interface CoachingData {
   };
   skill_tags: SkillId[];
   skill_scores: Partial<Record<SkillId, number>>;
+  micro_cue?: string | null;
   voice_tone?: {
     detected_emotion: string;
     confidence_level: number;

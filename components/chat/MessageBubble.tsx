@@ -86,6 +86,13 @@ export default function MessageBubble({
         <span className="text-[10px] text-muted-foreground/60 px-1">
           {formatTime(message.created_at)}
         </span>
+
+        {/* Inline micro-cue coaching nudge */}
+        {isUser && message.coaching?.micro_cue && (
+          <span className="text-[11px] text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5 mt-0.5 inline-block">
+            {message.coaching.micro_cue}
+          </span>
+        )}
       </div>
     </motion.div>
   );

@@ -39,6 +39,7 @@ const coachingDataSchema = z.object({
   tone_analysis: toneAnalysisSchema,
   skill_tags: z.array(skillIdSchema),
   skill_scores: z.record(z.string(), z.number().min(0).max(10)).default({}),
+  micro_cue: z.string().nullish(),
   voice_tone: voiceToneSchema,
 });
 

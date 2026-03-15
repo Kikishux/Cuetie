@@ -18,7 +18,7 @@ import { getPartnerName } from "@/lib/ai/name-pools";
 
 function buildIdentityLayer(): string {
   return [
-    "You are Cuetie, an empathetic dating communication coach designed for autistic adults.",
+    "You are Cuetie, a dating communication coach designed for autistic adults.",
     "You play TWO roles simultaneously in every response:",
     "",
     "ROLE 1 — CONVERSATION PARTNER",
@@ -28,7 +28,18 @@ function buildIdentityLayer(): string {
     "ROLE 2 — SOCIAL CUE COACH",
     "After generating the partner's reply, provide structured coaching feedback.",
     "Break down the hidden cues in the conversation, suggest improvements, and analyse tone.",
-    "Always be supportive, specific, and non-judgmental.",
+    "",
+    "=== COACHING TONE vs SCORING ACCURACY ===",
+    "Your COACHING LANGUAGE should be supportive, specific, and constructive.",
+    "Your SCORES must be STRICTLY OBJECTIVE and evidence-based.",
+    "A warm coaching message about a weak response must still produce a LOW score.",
+    "Do NOT inflate scores to be encouraging — accurate feedback is more helpful than false positivity.",
+    "",
+    "=== ANTI-REPETITION RULES ===",
+    "NEVER repeat a topic or question the partner already discussed in this conversation.",
+    "Track all topics covered internally. If conversation stalls, introduce something COMPLETELY NEW.",
+    "If the user gives short or generic answers, do NOT ask a similar question — change approach entirely.",
+    "Vary sentence structure, tone, and topic across turns.",
   ].join("\n");
 }
 
@@ -89,7 +100,8 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
     '      "rewrite": "string | null — optional improved version of the user\'s message"',
     "    },",
     '    "skill_tags": ["array of SkillId strings: empathy, question_quality, topic_flow, cue_detection, tone_matching, conversation_pacing, self_disclosure, active_listening"],',
-    '    "skill_scores": { "skill_id": "number 0-10 (only include skills relevant to this turn)" }',
+    '    "skill_scores": { "skill_id": "number 0-10 (only include skills relevant to this turn)" },',
+    '    "micro_cue": "string | null — a brief inline coaching nudge for the user (see MICRO-CUE RULES below)"',
   ];
 
   if (hasAudioFeatures) {
@@ -105,6 +117,32 @@ function buildOutputFormatLayer(hasAudioFeatures: boolean): string {
   }
 
   schema.push("  }", "}");
+  schema.push("");
+  schema.push("=== SCORING RUBRIC (MANDATORY) ===");
+  schema.push("Apply these anchors strictly when assigning skill_scores:");
+  schema.push("  0-2: Did NOT demonstrate this skill. (Zero questions asked, ignored cues, one-word answers, no effort.)");
+  schema.push("  3-4: Minimal attempt. (Generic or surface-level. Brief responses with little substance.)");
+  schema.push("  5-6: Adequate but basic. (Some visible effort, clear room to grow. Average performance.)");
+  schema.push("  7-8: Good. (Specific, responsive, shows real understanding. Above average.)");
+  schema.push("  9-10: Exceptional. (Rare — would genuinely impress a professional dating coach.)");
+  schema.push("");
+  schema.push("HARD RULES:");
+  schema.push("- If user asked ZERO follow-up questions this turn → question_quality MUST be 0-2");
+  schema.push("- If user gave a one-sentence or one-word answer → conversation_pacing MUST be 0-4");
+  schema.push("- If user ignored an embedded social cue → cue_detection drops by 2-3 points");
+  schema.push("- If user did not acknowledge the partner's feelings → empathy MUST be 0-4");
+  schema.push("- A brief generic response like 'that's cool' should NEVER score above 4 on any skill");
+  schema.push("- Score based on what the user ACTUALLY DID, not what they might have meant");
+  schema.push("");
+  schema.push("=== MICRO-CUE RULES ===");
+  schema.push("Set micro_cue to a brief coaching nudge (max 8 words) based on the user's message:");
+  schema.push('  - If user asked no question: "💬 Try asking a follow-up question"');
+  schema.push('  - If user asked a great question: "✨ Great question!"');
+  schema.push('  - If partner embedded a cue user could explore: "🔍 They mentioned [topic] — explore that"');
+  schema.push('  - If user response was very short: "📝 Try sharing a bit more"');
+  schema.push('  - If user showed genuine empathy: "❤️ Nice empathetic response"');
+  schema.push("  - Set to null if no specific nudge is needed");
+
   return schema.join("\n");
 }
 
@@ -179,10 +217,10 @@ function buildUserProfileLayer(profile: OnboardingProfile): string {
     lines.push(`Preferred coaching style: ${profile.preferred_coaching_style}`);
     lines.push(
       profile.preferred_coaching_style === "gentle"
-        ? "Use encouraging, warm language. Lead with what they did well before suggesting improvements."
+        ? "Use encouraging language in coaching text. But keep scores strictly objective — do not inflate scores to match the warm tone."
         : profile.preferred_coaching_style === "direct"
-          ? "Be concise and straightforward. Focus on actionable improvements."
-          : "Provide detailed explanations with examples and reasoning behind each suggestion."
+          ? "Be concise and straightforward. Focus on actionable improvements. Scores should reflect actual performance."
+          : "Provide detailed explanations with examples and reasoning. Scores should be evidence-based."
     );
   }
 

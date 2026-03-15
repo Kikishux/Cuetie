@@ -8,7 +8,7 @@ import type { DatingPreference } from "@/lib/types/database";
 
 export const CHAT_CONFIG: PromptConfig = {
   model: "gpt-4o",
-  temperature: 0.8,
+  temperature: 0.5,
   max_tokens: 1000,
   response_format: { type: "json_object" },
 };
