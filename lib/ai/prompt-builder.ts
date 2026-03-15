@@ -3,7 +3,10 @@ import type {
   Message,
   OnboardingProfile,
   Scenario,
+  RoundType,
+  SessionMode,
 } from "@/lib/types/database";
+import { getSessionLimits, getUserTurnCount } from "@/lib/types/database";
 import type { AudioFeatures } from "@/lib/ai/voice-coaching";
 import type { HumeEmotionResult } from "@/lib/types/hume";
 import { MAX_CONTEXT_MESSAGES } from "@/lib/ai/config";
@@ -217,12 +220,54 @@ function formatHistory(
  * @param audioFeatures  - Optional audio features from voice recording
  * @returns Array of OpenAI chat messages ready for the API
  */
+function buildSessionPacingLayer(
+  roundType: RoundType,
+  mode: SessionMode,
+  messageCount: number,
+): string {
+  const limits = getSessionLimits(roundType, mode);
+  const currentTurn = getUserTurnCount(messageCount);
+  const totalTurns = limits.max_user_turns;
+  const remaining = Math.max(0, totalTurns - currentTurn);
+
+  const lines = [
+    "=== SESSION PACING ===",
+    `This is a ${roundType} practice round with ${totalTurns} user turns total.`,
+    `Current turn: ${currentTurn + 1} of ${totalTurns} (${remaining} remaining after this one).`,
+  ];
+
+  if (remaining <= 2 && remaining > 0) {
+    lines.push(
+      "",
+      "IMPORTANT: The conversation is nearing its end.",
+      "As the partner, begin naturally wrapping up — perhaps suggest exchanging numbers,",
+      "making plans, or giving a warm goodbye. Do NOT abruptly end the conversation.",
+      "Let the user practice closing a conversation gracefully.",
+    );
+  } else if (remaining <= Math.ceil(totalTurns / 2)) {
+    lines.push(
+      "",
+      "The conversation is past the midpoint. Begin deepening the connection or",
+      "moving toward a natural next step (suggesting plans, sharing something personal).",
+    );
+  } else {
+    lines.push(
+      "",
+      "The conversation is still early. Focus on building rapport, asking questions,",
+      "and showing genuine interest. Don't rush toward big milestones.",
+    );
+  }
+
+  return lines.join("\n");
+}
+
 export function buildChatPrompt(
   scenario: Scenario,
   userProfile: OnboardingProfile,
   conversationHistory: Message[],
   audioFeatures?: AudioFeatures | null,
-  humeEmotions?: HumeEmotionResult | null
+  humeEmotions?: HumeEmotionResult | null,
+  sessionPacing?: { roundType: RoundType; mode: SessionMode; messageCount: number },
 ): ChatCompletionMessageParam[] {
   const partnerNameOverride = getPartnerName(
     userProfile.dating_preference,
@@ -245,6 +290,14 @@ export function buildChatPrompt(
 
   if (humeEmotions) {
     layers.push("", buildHumeEmotionLayer(humeEmotions));
+  }
+
+  if (sessionPacing) {
+    layers.push("", buildSessionPacingLayer(
+      sessionPacing.roundType,
+      sessionPacing.mode,
+      sessionPacing.messageCount,
+    ));
   }
 
   const systemPrompt = layers.join("\n");

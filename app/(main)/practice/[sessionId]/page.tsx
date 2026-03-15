@@ -131,6 +131,36 @@ export default function SessionPage() {
     return () => clearInterval(interval);
   }, [session, handleEndSession]);
 
+  // Inactivity auto-abandon: end session after 30 min of no interaction
+  useEffect(() => {
+    if (!session || session.status !== "active") return;
+
+    let lastActivity = Date.now();
+    const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+    const resetActivity = () => { lastActivity = Date.now(); };
+
+    // Track user activity
+    window.addEventListener("keydown", resetActivity);
+    window.addEventListener("mousedown", resetActivity);
+    window.addEventListener("touchstart", resetActivity);
+
+    const checker = setInterval(() => {
+      if (Date.now() - lastActivity >= INACTIVITY_TIMEOUT) {
+        setSessionWarning("Session ended due to inactivity.");
+        handleEndSession();
+        clearInterval(checker);
+      }
+    }, 60_000); // Check every minute
+
+    return () => {
+      clearInterval(checker);
+      window.removeEventListener("keydown", resetActivity);
+      window.removeEventListener("mousedown", resetActivity);
+      window.removeEventListener("touchstart", resetActivity);
+    };
+  }, [session, handleEndSession]);
+
   const partnerName = scenario?.partner_persona?.name ?? "Partner";
   const isPremiumUser = subscriptionTier === "premium";
 

@@ -189,10 +189,10 @@ session-config-types
 
 ---
 
-## Decisions (Resolved)
+## Decisions (Resolved & Implemented)
 
-1. **Round selection:** Users choose freely, Standard Round default-highlighted
-2. **Progress display:** Time remaining only (no turn counter shown to user — turns enforced silently on backend)
-3. **Tab close / inactivity:** Auto-abandon session after 30 min inactivity
-4. **AI awareness:** Yes — system prompt includes round length so AI paces the conversation arc naturally
-5. **Token safety cap:** 2x expected cost for the round type
+1. **Round selection:** ✅ Users choose freely, Standard Round default-highlighted
+2. **Progress display:** ✅ Time remaining only (turns enforced silently on backend)
+3. **Tab close / inactivity:** ✅ Auto-abandon session after 30 min inactivity (keydown/mousedown/touch tracking)
+4. **AI awareness:** ✅ System prompt includes round length + current turn — AI paces conversation arc naturally (early rapport → midpoint deepening → graceful close)
+5. **Token safety cap:** ✅ 2x expected cost for the round type

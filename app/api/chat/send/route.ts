@@ -187,7 +187,12 @@ export async function POST(request: NextRequest) {
           userProfile,
           messages ?? [],
           audioFeatures,
-          humeEmotions
+          humeEmotions,
+          {
+            roundType: session.round_type ?? "standard",
+            mode: session.mode,
+            messageCount: session.message_count,
+          },
         );
 
         const completion = await getOpenAIClient().chat.completions.create({
