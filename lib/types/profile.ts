@@ -8,8 +8,11 @@ export type ToneTrait = 'direct' | 'warm' | 'playful' | 'storytelling' | 'though
 export type ConversationPref = 'deep' | 'light_fun' | 'asking_questions' | 'listening_first' |
   'exchanging_ideas' | 'storytelling';
 export type NeurodivergentIdentity = 'yes' | 'no' | 'prefer_not_to_say';
-export type NeurodivergentTrait = 'adhd' | 'autistic' | 'dyslexia' | 'dyspraxia' |
-  'sensory_sensitivity' | 'hyperfocus' | 'executive_function' | 'social_processing' | 'other';
+export type NeurodivergentTrait =
+  | 'adhd' | 'arfid' | 'attachment_trauma' | 'autism' | 'bipolar' | 'bpd'
+  | 'cerebral_palsy' | 'depression' | 'down_syndrome' | 'dpd' | 'dyslexia' | 'dyspraxia'
+  | 'hallucination' | 'intellectual_disability' | 'mood_swing' | 'ocd'
+  | 'recovery_people_pleaser' | 'social_anxiety' | 'stutter' | 'tourettes';
 export type SupportPreference = 'clear_direct' | 'processing_time' | 'written_preferred' |
   'structured_plans' | 'flexible_plans';
 
@@ -45,8 +48,10 @@ export const profileEnrichmentSchema = z.object({
   interests: z.array(z.string()).max(10).optional(),
   neurodivergent_identity: z.enum(['yes', 'no', 'prefer_not_to_say']).optional(),
   neurodivergent_traits: z.array(
-    z.enum(['adhd', 'autistic', 'dyslexia', 'dyspraxia',
-      'sensory_sensitivity', 'hyperfocus', 'executive_function', 'social_processing', 'other'])
+    z.enum(['adhd', 'arfid', 'attachment_trauma', 'autism', 'bipolar', 'bpd',
+      'cerebral_palsy', 'depression', 'down_syndrome', 'dpd', 'dyslexia', 'dyspraxia',
+      'hallucination', 'intellectual_disability', 'mood_swing', 'ocd',
+      'recovery_people_pleaser', 'social_anxiety', 'stutter', 'tourettes'])
   ).optional(),
   support_preferences: z.array(
     z.enum(['clear_direct', 'processing_time', 'written_preferred',

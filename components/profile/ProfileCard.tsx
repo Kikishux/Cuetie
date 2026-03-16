@@ -55,14 +55,25 @@ const communicationFrequencyLabels: Record<string, string> = {
 
 const neurodivergentTraitLabels: Record<string, string> = {
   adhd: "ADHD",
-  autistic: "Autistic",
+  arfid: "ARFID",
+  attachment_trauma: "Attachment trauma",
+  autism: "Autism",
+  bipolar: "Bipolar",
+  bpd: "BPD",
+  cerebral_palsy: "Cerebral palsy",
+  depression: "Depression",
+  down_syndrome: "Down syndrome",
+  dpd: "DPD",
   dyslexia: "Dyslexia",
   dyspraxia: "Dyspraxia",
-  sensory_sensitivity: "Sensory sensitivity",
-  hyperfocus: "Hyperfocus",
-  executive_function: "Executive function",
-  social_processing: "Social processing",
-  other: "Other",
+  hallucination: "Hallucination",
+  intellectual_disability: "Intellectual disability",
+  mood_swing: "Mood swing",
+  ocd: "OCD",
+  recovery_people_pleaser: "Recovery people pleaser",
+  social_anxiety: "Social anxiety",
+  stutter: "Stutter",
+  tourettes: "Tourette's",
 }
 
 const supportPreferenceLabels: Record<string, string> = {

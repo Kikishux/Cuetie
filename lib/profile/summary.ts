@@ -32,14 +32,25 @@ const conversationPrefLabels: Record<ConversationPref, string> = {
 
 const neurodivergentTraitLabels: Record<NeurodivergentTrait, string> = {
   adhd: "ADHD",
-  autistic: "autistic",
+  arfid: "ARFID",
+  attachment_trauma: "attachment trauma",
+  autism: "autism",
+  bipolar: "bipolar",
+  bpd: "BPD",
+  cerebral_palsy: "cerebral palsy",
+  depression: "depression",
+  down_syndrome: "Down syndrome",
+  dpd: "DPD",
   dyslexia: "dyslexia",
   dyspraxia: "dyspraxia",
-  sensory_sensitivity: "sensory sensitivity",
-  hyperfocus: "hyperfocus",
-  executive_function: "executive function differences",
-  social_processing: "social processing differences",
-  other: "other",
+  hallucination: "hallucination",
+  intellectual_disability: "intellectual disability",
+  mood_swing: "mood swings",
+  ocd: "OCD",
+  recovery_people_pleaser: "recovery from people pleasing",
+  social_anxiety: "social anxiety",
+  stutter: "stutter",
+  tourettes: "Tourette's",
 }
 
 const supportPreferenceLabels: Record<SupportPreference, string> = {
