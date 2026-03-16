@@ -5,6 +5,32 @@
 
 ---
 
+## Quick Start (for developers who already have accounts)
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/Kikishux/Cuetie.git
+cd Cuetie
+
+# 2. Install dependencies
+npm install
+
+# 3. Copy and fill in environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase URL, anon key, service role key, and OpenAI API key
+
+# 4. Run all migrations in Supabase SQL Editor (001 → 007), then run seed.sql
+
+# 5. Create a test user in Supabase Auth dashboard:
+#    Email: demo.alex@cuetie.test  Password: CuetieDemo2026!
+
+# 6. Start the dev server
+npm run dev
+# Open http://localhost:3000
+```
+
+---
+
 ## Table of Contents
 
 1. [Prerequisites (What You Need)](#1-prerequisites)
@@ -83,11 +109,23 @@ Supabase is your database and handles user login/signup.
 ### Step 2.3 — Create the Database Tables
 
 1. In your Supabase dashboard, go to **SQL Editor** (left sidebar)
-2. Click **"New Query"**
-3. Open the file `supabase/migrations/001_initial_schema.sql` from the Cuetie project
-4. Copy the **entire contents** and paste it into the SQL Editor
-5. Click **"Run"** (or press Ctrl+Enter)
-6. You should see "Success. No rows returned" — this means the tables were created
+2. Run each migration file **in order**. For each file:
+   - Click **"New Query"**
+   - Open the migration file from the Cuetie project
+   - Copy the **entire contents** and paste it into the SQL Editor
+   - Click **"Run"** (or press Ctrl+Enter)
+
+   | # | File | What It Creates |
+   |---|------|----------------|
+   | 1 | `supabase/migrations/001_initial_schema.sql` | Core tables: users, scenarios, sessions, messages, skills |
+   | 2 | `supabase/migrations/002_subscription_tier.sql` | Subscription tier column |
+   | 3 | `supabase/migrations/003_expanded_scenarios.sql` | Additional practice scenarios |
+   | 4 | `supabase/migrations/004_persona_dimensions.sql` | Partner personality dimensions |
+   | 5 | `supabase/migrations/005_session_round_type.sql` | Session round types (quick/standard/deep) |
+   | 6 | `supabase/migrations/006_dating_app_scenarios.sql` | Dating app messaging scenarios |
+   | 7 | `supabase/migrations/007_finetune_sessions.sql` | Fine-tune / dynamic scenario support |
+
+   ⚠️ **Order matters** — run them 001 → 007 sequentially.
 
 ### Step 2.4 — Seed the Practice Scenarios
 
@@ -95,9 +133,21 @@ Supabase is your database and handles user login/signup.
 2. Open the file `supabase/seed.sql` from the Cuetie project
 3. Copy the **entire contents** and paste it in
 4. Click **"Run"**
-5. You should see "Success. 10 rows affected" — these are your 10 dating practice scenarios
+5. You should see "Success" — this populates scenarios and skill definitions
 
-### Step 2.5 — Verify Tables Were Created
+### Step 2.5 — Create a Test User
+
+1. In your Supabase dashboard, go to **Authentication** → **Users** (left sidebar)
+2. Click **"Add User"** → **"Create new user"**
+3. Enter:
+   - **Email**: `demo.alex@cuetie.test`
+   - **Password**: `CuetieDemo2026!`
+   - Check **"Auto Confirm User"**
+4. Click **"Create User"**
+
+> 💡 This gives you a test account to log in immediately without email verification.
+
+### Step 2.6 — Verify Tables Were Created
 
 1. Go to **Table Editor** (left sidebar)
 2. You should see these tables:
