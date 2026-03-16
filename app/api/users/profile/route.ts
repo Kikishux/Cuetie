@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     .from("users")
     .update({ profile_enrichment: validated })
     .eq("id", user.id)
-    .select()
+    .select("profile_enrichment")
     .single()
 
   if (error) {

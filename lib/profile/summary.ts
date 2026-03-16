@@ -95,7 +95,7 @@ export function generateProfileSummary(p: ProfileEnrichment): string {
     const ndTraits = (p.neurodivergent_traits ?? []).map((t) => neurodivergentTraitLabels[t])
     const supportPrefs = (p.support_preferences ?? []).map((s) => supportPreferenceLabels[s])
     const hasTraits = ndTraits.length > 0
-    const hasSupport = supportPrefs.length > 0 || !!p.support_notes
+    const hasSupport = supportPrefs.length > 0
 
     if (hasTraits || hasSupport) {
       let sentence = "Identifies as neurodivergent"
@@ -106,9 +106,6 @@ export function generateProfileSummary(p: ProfileEnrichment): string {
         sentence += ` and appreciates ${joinList(supportPrefs)}`
       }
       sentence += "."
-      if (p.support_notes) {
-        sentence += ` ${p.support_notes}`
-      }
       sentences.push(sentence)
     }
   }
