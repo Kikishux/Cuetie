@@ -178,6 +178,7 @@ function FullCard({
 
   const isNeurodivergent = profile.neurodivergent_identity === "yes"
   const ndTraits = profile.neurodivergent_traits ?? []
+  const ndCustom = profile.neurodivergent_custom ?? []
   const supportPrefs = profile.support_preferences ?? []
 
   return (
@@ -271,11 +272,16 @@ function FullCard({
       {isNeurodivergent && (
         <div className="space-y-1.5">
           <SectionLabel>Neurodivergence</SectionLabel>
-          {ndTraits.length > 0 && (
+          {(ndTraits.length > 0 || ndCustom.length > 0) && (
             <div className="flex flex-wrap gap-1.5">
               {ndTraits.map((trait) => (
                 <Badge key={trait} variant="secondary" className="text-xs">
                   {neurodivergentTraitLabels[trait] ?? trait}
+                </Badge>
+              ))}
+              {ndCustom.map((trait) => (
+                <Badge key={trait} variant="secondary" className="text-xs">
+                  {trait}
                 </Badge>
               ))}
             </div>

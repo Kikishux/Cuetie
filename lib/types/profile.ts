@@ -26,6 +26,7 @@ export interface ProfileEnrichment {
   interests?: string[];                    // max 10 slugs
   neurodivergent_identity?: NeurodivergentIdentity;
   neurodivergent_traits?: NeurodivergentTrait[];
+  neurodivergent_custom?: string[];        // user-written custom traits
   support_preferences?: SupportPreference[];
   support_notes?: string;                  // free text, max 300 chars
 }
@@ -53,6 +54,7 @@ export const profileEnrichmentSchema = z.object({
       'hallucination', 'intellectual_disability', 'mood_swing', 'ocd',
       'recovery_people_pleaser', 'social_anxiety', 'stutter', 'tourettes'])
   ).optional(),
+  neurodivergent_custom: z.array(z.string().max(100)).optional(),
   support_preferences: z.array(
     z.enum(['clear_direct', 'processing_time', 'written_preferred',
       'structured_plans', 'flexible_plans'])

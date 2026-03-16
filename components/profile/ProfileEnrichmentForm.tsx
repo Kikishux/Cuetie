@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Save, Loader2, Check } from "lucide-react"
+import { Save, Loader2, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CollapsiblePanel } from "@/components/ui/collapsible-panel"
@@ -29,6 +30,7 @@ export default function ProfileEnrichmentForm({ initialData }: ProfileEnrichment
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [customTraitInput, setCustomTraitInput] = useState("")
 
   function update<K extends keyof ProfileEnrichment>(key: K, value: ProfileEnrichment[K]) {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -384,6 +386,49 @@ export default function ProfileEnrichmentForm({ initialData }: ProfileEnrichment
                       </Badge>
                     )
                   })}
+                  {(form.neurodivergent_custom ?? []).map(val => (
+                    <Badge
+                      key={val}
+                      variant="default"
+                      className="cursor-pointer select-none"
+                      onClick={() => update("neurodivergent_custom", (form.neurodivergent_custom ?? []).filter(t => t !== val))}
+                    >
+                      {val}
+                      <X className="ml-1 h-3 w-3" />
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Input
+                    placeholder="Write your own…"
+                    value={customTraitInput}
+                    onChange={e => setCustomTraitInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        const val = customTraitInput.trim()
+                        if (val && !(form.neurodivergent_custom ?? []).includes(val)) {
+                          update("neurodivergent_custom", [...(form.neurodivergent_custom ?? []), val])
+                          setCustomTraitInput("")
+                        }
+                      }
+                    }}
+                    className="max-w-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const val = customTraitInput.trim()
+                      if (val && !(form.neurodivergent_custom ?? []).includes(val)) {
+                        update("neurodivergent_custom", [...(form.neurodivergent_custom ?? []), val])
+                        setCustomTraitInput("")
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
                 </div>
               </div>
 
