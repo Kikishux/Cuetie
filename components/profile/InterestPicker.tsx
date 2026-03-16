@@ -14,11 +14,11 @@ interface InterestPickerProps {
 
 const CATEGORIES: { name: string; slugs: string[] }[] = [
   { name: "Outdoors", slugs: ["hiking", "camping", "climbing", "running", "biking"] },
-  { name: "Arts", slugs: ["museums", "photography", "design", "theater", "books"] },
+  { name: "Arts", slugs: ["museums", "photography", "design", "theater", "books", "writing", "crafts"] },
   { name: "Food", slugs: ["cooking", "coffee", "wine", "restaurants", "baking"] },
-  { name: "Entertainment", slugs: ["movies", "live_music", "gaming", "podcasts", "tv_shows"] },
-  { name: "Wellness", slugs: ["yoga", "meditation", "fitness", "mental_wellness"] },
-  { name: "Social", slugs: ["traveling", "brunch", "community_events", "volunteering"] },
+  { name: "Entertainment", slugs: ["movies", "live_music", "gaming", "podcasts", "tv_shows", "concerts"] },
+  { name: "Wellness", slugs: ["yoga", "meditation", "fitness", "mental_wellness", "cycling", "nutrition"] },
+  { name: "Social", slugs: ["traveling", "brunch", "community_events", "volunteering", "board_games", "trivia", "meetups"] },
   { name: "Learning", slugs: ["languages", "tech", "history", "psychology", "science"] },
 ]
 
@@ -104,6 +104,13 @@ export default function InterestPicker({ value, onChange }: InterestPickerProps)
         onChange={(e) => setSearch(e.target.value)}
         className="mb-4"
       />
+
+      {/* Empty state */}
+      {filteredCategories.length === 0 && (
+        <p className="text-sm text-muted-foreground py-4 text-center">
+          No interests match your search
+        </p>
+      )}
 
       {/* Category sections */}
       {filteredCategories.map((cat) => (
