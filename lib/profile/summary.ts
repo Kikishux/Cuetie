@@ -106,6 +106,9 @@ export function generateProfileSummary(p: ProfileEnrichment): string {
         sentence += ` and appreciates ${joinList(supportPrefs)}`
       }
       sentence += "."
+      if (p.support_notes) {
+        sentence += ` ${p.support_notes}`
+      }
       sentences.push(sentence)
     }
   }
