@@ -1,4 +1,5 @@
 // TypeScript types matching the Supabase database schema
+import { ProfileEnrichment } from "./profile";
 
 export type DifficultyLevel = "beginner" | "intermediate" | "advanced";
 
@@ -76,6 +77,7 @@ export interface User {
   display_name: string | null;
   avatar_url: string | null;
   onboarding_profile: OnboardingProfile;
+  profile_enrichment: ProfileEnrichment;
   has_onboarded: boolean;
   subscription_tier: "free" | "premium";
   created_at: string;

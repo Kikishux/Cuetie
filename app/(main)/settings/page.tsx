@@ -320,6 +320,20 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Communication Profile</CardTitle>
+          <CardDescription>
+            Share how you communicate and what you're into — helps match you to better practice scenarios.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <a href="/profile" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+            Edit your profile →
+          </a>
+        </CardContent>
+      </Card>
+
       <Card className={subscriptionTier === "premium" ? "border-primary/30 bg-primary/[0.03]" : undefined}>
         <CardHeader>
           <CardTitle className="text-base">Your Plan</CardTitle>
